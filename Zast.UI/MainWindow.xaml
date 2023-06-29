@@ -1,0 +1,47 @@
+﻿<hc:GlowWindow x:Class="Zast.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Zast.UI"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:cw="clr-namespace:Mikibot.Crawler.WebsocketCrawler.Data.Commands;assembly=Mikibot.Crawler"
+        mc:Ignorable="d"
+        Title="NewWindow" Height="450" Width="300">
+    <hc:ScrollViewer>
+        <ListView x:Name="List">
+            <ListView.Resources>
+                <DataTemplate x:Key="danmaku">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <hc:Shield Subject="{Binding Path=Info.FansTag}" Status="{Binding Path=Info.FansLevel}" Color="{Binding Info.HexColor}" />
+                        <TextBlock Text="{Binding Path=Info.UserName}" />
+                        <TextBlock Text=":"/>
+                        <TextBlock Text="{Binding Path=Info.Msg}" />
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate x:Key="enter">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Path=Data.UserName}" />
+                        <TextBlock Text=" 进入直播间"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.Resources>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Style>
+                            <Style TargetType="{x:Type ContentControl}">
+                                <Setter Property="ContentTemplate" Value="{StaticResource danmaku}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Command}" Value="{x:Static cw:KnownCommands.INTERACT_WORD}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource enter}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </hc:ScrollViewer>
+</hc:GlowWindow>

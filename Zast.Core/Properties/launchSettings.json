@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Zast Core": {
+      "commandName": "Executable",
+      "executablePath": "$(SolutionDir)build\\$(ConfigurationName)\\$(ProjectName).exe",
+      "workingDirectory": "$(SolutionDir)build\\$(ConfigurationName)\\"
+    }
+  }
+}
