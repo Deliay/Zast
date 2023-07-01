@@ -109,5 +109,8 @@ namespace Mikibot.Crawler.WebsocketCrawler.Data.Commands
         GUARD_HONOR_THOUSAND,
         TRADING_SCORE,
         POPULARITY_RED_POCKET_NEW,
+        RECOMMEND_CARD,
+        GOTO_BUY_FLOW,
+        LIVE_MULTI_VIEW_CHANGE,
     }
 }
