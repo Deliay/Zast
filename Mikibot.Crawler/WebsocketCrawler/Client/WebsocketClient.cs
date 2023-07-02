@@ -24,9 +24,9 @@ namespace Mikibot.Crawler.WebsocketCrawler.Client
             _csc = new();
         }
 
-        public int RoomId { get; private set; }
+        public long RoomId { get; private set; }
 
-        public async ValueTask<bool> ConnectAsync(string host, int port, int roomId, string liveToken, string protocol = "ws", CancellationToken cancellationToken = default)
+        public async ValueTask<bool> ConnectAsync(string host, int port, long roomId, string liveToken, string protocol = "ws", CancellationToken cancellationToken = default)
         {
             var connectCsc = CancellationTokenSource.CreateLinkedTokenSource(_csc.Token, cancellationToken);
             await _worker.ConnectAsync(host, port, roomId, liveToken, protocol, connectCsc.Token);

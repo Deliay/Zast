@@ -16,7 +16,7 @@ namespace Mikibot.Crawler.Http.Bilibili
         public const string mxmks = "477317922";
 
         [Obsolete("不让抓了")]
-        public async ValueTask<PersonalInfo> GetPersonalInfo(int uid, CancellationToken token = default)
+        public async ValueTask<PersonalInfo> GetPersonalInfo(long uid, CancellationToken token = default)
         {
             var result = await GetAsync<BilibiliApiResponse<PersonalInfo>>($"https://api.bilibili.com/x/space/acc/info?mid={uid}", token);
             result.AssertCode();
@@ -24,7 +24,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data;
         }
 
-        public async ValueTask<int> GetFollowerCount(int uid, CancellationToken token = default)
+        public async ValueTask<long> GetFollowerCount(long uid, CancellationToken token = default)
         {
             var result = await GetAsync<BilibiliApiResponse<StatInfo>>($"https://api.bilibili.com/x/relation/stat?vmid={uid}", token);
             result.AssertCode();
@@ -33,7 +33,7 @@ namespace Mikibot.Crawler.Http.Bilibili
         }
 
         [Obsolete("不让抓了")]
-        public async ValueTask<PersonalInfo.LiveRoomDetail> GetPersonalLiveRoomDetail(int uid, CancellationToken token = default)
+        public async ValueTask<PersonalInfo.LiveRoomDetail> GetPersonalLiveRoomDetail(long uid, CancellationToken token = default)
         {
             var result = await GetAsync<BilibiliApiResponse<PersonalInfo.LiveRoomDetail>>(
                 $"https://api.live.bilibili.com/room/v1/Room/getRoomInfoOld?mid={uid}", token);
@@ -42,7 +42,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data;
         }
 
-        public async ValueTask<LiveInitInfo> GetRealRoomInfo(int roomId, CancellationToken token = default)
+        public async ValueTask<LiveInitInfo> GetRealRoomInfo(long roomId, CancellationToken token = default)
         {
             if (roomIdMappingCache.ContainsKey(roomId))
             {
@@ -56,20 +56,20 @@ namespace Mikibot.Crawler.Http.Bilibili
             return roomResult.Data;
         }
 
-        public async ValueTask<int> GetRealRoomId(int roomId, CancellationToken token = default)
+        public async ValueTask<long> GetRealRoomId(long roomId, CancellationToken token = default)
         {
             return (await GetRealRoomInfo(roomId, token)).RoomId;
         }
 
         [Obsolete("不让抓了")]
-        public async ValueTask<LiveToken> GetLiveTokenByUid(int uid, CancellationToken token = default)
+        public async ValueTask<LiveToken> GetLiveTokenByUid(long uid, CancellationToken token = default)
         {
             var liveRoom = await GetPersonalLiveRoomDetail(uid, token);
 
             return await GetLiveToken(liveRoom.RoomId, token);
         }
 
-        public async ValueTask<LiveToken> GetLiveToken(int roomId, CancellationToken token = default)
+        public async ValueTask<LiveToken> GetLiveToken(long roomId, CancellationToken token = default)
         {
             var tokenUrl = $"http://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?id={roomId}";
             var result = await GetAsync<BilibiliApiResponse<LiveToken>>(tokenUrl, token);
@@ -78,7 +78,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data;
         }
 
-        public async ValueTask<List<LiveStreamAddress>> GetLiveStreamAddress(int roomid, CancellationToken token = default)
+        public async ValueTask<List<LiveStreamAddress>> GetLiveStreamAddress(long roomid, CancellationToken token = default)
         {
             var url = $"http://api.live.bilibili.com/room/v1/Room/playUrl?cid={roomid}&platform=web&quality=4&qn=400";
             var result = await GetAsync<BilibiliApiResponse<LiveStreamAddresses>>(url, token);
@@ -87,14 +87,14 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data.Urls;
         }
 
-        private static readonly Dictionary<int, LiveInitInfo> roomIdMappingCache = new();
-        public async ValueTask<GuardInfo> GetRoomGuardList(int roomId, int page = 1, CancellationToken token = default)
+        private static readonly Dictionary<long, LiveInitInfo> roomIdMappingCache = new();
+        public async ValueTask<GuardInfo> GetRoomGuardList(long roomId, int page = 1, CancellationToken token = default)
         {
             var roomInfo = await GetRealRoomInfo(roomId, token);
             return await GetRoomGuardList(roomInfo.RoomId, roomInfo.BId, page, token);
         }
 
-        public async ValueTask<GuardInfo> GetRoomGuardList(int roomId, int bId, int page = 1, CancellationToken token = default)
+        public async ValueTask<GuardInfo> GetRoomGuardList(long roomId, long bId, int page = 1, CancellationToken token = default)
         {
             var url = $"http://api.live.bilibili.com/xlive/app-room/v2/guardTab/topList?roomid={roomId}&page={page}&ruid={bId}&page_size=29";
             var result = await GetAsync<BilibiliApiResponse<GuardInfo>>(url, token);
@@ -103,7 +103,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data;
         }
 
-        public async ValueTask<LiveRoomInfo> GetLiveRoomInfo(int roomId, CancellationToken token = default)
+        public async ValueTask<LiveRoomInfo> GetLiveRoomInfo(long roomId, CancellationToken token = default)
         {
             var url = $"http://api.live.bilibili.com/room/v1/Room/get_info?room_id={roomId}";
             var result = await GetAsync<BilibiliApiResponse<LiveRoomInfo>>(url, token);
@@ -121,7 +121,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return new Guid(array).ToString();
         }
 
-        public async ValueTask SendMessage(string cookie, int senderBid, int targetBid, string message, CancellationToken token = default)
+        public async ValueTask SendMessage(string cookie, long senderBid, long targetBid, string message, CancellationToken token = default)
         {
             var indexOfCsrf = cookie.IndexOf("bili_jct=") + 9;
             if (indexOfCsrf == -1) throw new InvalidDataException("Cookie not include any csrf token, consider update you cookie!");

@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Mikibot.Crawler.Http.Bilibili.Model
+namespace Zast.Player.CUI.Scripts
 {
-    public struct StatInfo
+    public interface IMenuItem : IScript
     {
-        public long Follower { get; set; }
     }
 }

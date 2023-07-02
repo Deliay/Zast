@@ -51,9 +51,17 @@ namespace Zast.Player.CUI
             AnsiConsole.Write(panel);
         }
 
+        private static void Handle(DanmuMsg msg)
+        {
+            var medal = (msg.FansLevel > 0
+                ? $"[grey][[[/][blue]{msg.FansTag}[/][grey]|[/][silver]{msg.FansLevel}[/][grey]]][/]"
+                : "").PadRight(10, ' ');
+            AnsiConsole.MarkupLine($"[grey]弹幕[/] {medal}[teal]{msg.UserName.EscapeMarkup()}[/]: [white]{msg.Msg.EscapeMarkup()}[/]");
+        }
+
         static CommandWriterExtension()
         {
-            cmdHandler.Subscribe<DanmuMsg>((danmu) => AnsiConsole.MarkupLine($"[grey]弹幕[/] [teal]{danmu.UserName.EscapeMarkup()}[/]: [white]{danmu.Msg.EscapeMarkup()}[/]"));
+            cmdHandler.Subscribe<DanmuMsg>(Handle);
             cmdHandler.Subscribe<InteractWord>((msg) => AnsiConsole.MarkupLine($"[grey]进入[/] [grey]{msg.UserName.EscapeMarkup()}[/] [grey]进入直播间[/]"));
             cmdHandler.Subscribe<OnlineRankCount>((ranking) => AnsiConsole.MarkupLine($"当前在线人数 [green]{ranking.Count}[/]"));
             cmdHandler.Subscribe<SendGift>(Handle);

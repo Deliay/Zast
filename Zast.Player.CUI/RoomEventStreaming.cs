@@ -29,18 +29,16 @@ namespace Zast.Player.CUI
             GC.SuppressFinalize(this);
         }
 
-        public async IAsyncEnumerable<ICommandBase> RunAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<ICommandBase> RunAsync(long roomId, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             using var _csc = csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            var realRoomId = await crawler.GetRealRoomId(rawRoomId, _csc.Token);
-
-            var spectatorEndpoint = await crawler.GetLiveToken(realRoomId, _csc.Token);
+            var spectatorEndpoint = await crawler.GetLiveToken(roomId, _csc.Token);
 
             foreach (var spectatorHost in spectatorEndpoint.Hosts)
             {
                 using var wsClient = new WebsocketClient();
-                await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, realRoomId, spectatorEndpoint.Token, "wss", _csc.Token);
+                await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, spectatorEndpoint.Token, "wss", _csc.Token);
 
                 await foreach (var @event in wsClient.Events(_csc.Token))
                 {
