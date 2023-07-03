@@ -164,7 +164,10 @@ namespace Zast.Player.CUI.Bilibili
             try
             {
                 roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, cancellationToken);
-                await Task.WhenAll(RunDanmakuHandler(context, token), Quit(csc, token));
+                await Task.WhenAll(
+                    RunDanmakuHandler(context, token),
+                    RunLiveStream(context, token),
+                    Quit(csc, token));
             }
             catch (Exception e)
             {

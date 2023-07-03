@@ -17,6 +17,7 @@ builder.AddSingleton<ScriptManager>();
 builder.AddSingleton<ZastCuiSettingRepository>();
 
 builder.AddSingleton<MainMenuScene>();
+builder.AddSingleton<InitializeScene>();
 builder.AddAllSingleton<HistoryRoomScene, IMenuItem>();
 builder.AddAllSingleton<EnterRoomScene, IMenuItem>();
 builder.AddAllSingleton<LoginScene, IMenuItem>();

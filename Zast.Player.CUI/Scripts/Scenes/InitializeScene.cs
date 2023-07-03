@@ -36,9 +36,13 @@ namespace Zast.Player.CUI.Scripts.Scenes
             context.Set(config);
 
             var cookie = await cookieStore.Load(cancellationToken);
-            crawler.SetCookie(cookie.Cookie);
-            basicInfoCrawler.SetCookie(cookie.Cookie);
-            context.Set(cookie);
+
+            if (!string.IsNullOrWhiteSpace(cookie.Cookie))
+            {
+                crawler.SetCookie(cookie.Cookie);
+                basicInfoCrawler.SetCookie(cookie.Cookie);
+                context.Set(cookie);
+            }
 
             return prev;
         }
