@@ -13,13 +13,11 @@ namespace Zast.Player.CUI.Bilibili
 {
     public class RoomEventStreaming : IDisposable
     {
-        private readonly int rawRoomId;
         private readonly BiliLiveCrawler crawler;
         private CancellationTokenSource? csc;
 
-        public RoomEventStreaming(BiliLiveCrawler crawler, int rawRoomId)
+        public RoomEventStreaming(BiliLiveCrawler crawler)
         {
-            this.rawRoomId = rawRoomId;
             this.crawler = crawler;
         }
 
