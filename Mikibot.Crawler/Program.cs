@@ -42,7 +42,7 @@ while (init.List.Count > 0
 var count = allGuards.Where(n => n.Online != 0).Count();
 Console.WriteLine($"舰长在线数量:{count}");
 
-await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, realRoomId, spectatorEndpoint.Token, "wss", cancellationToken: csc.Token);
+await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, realRoomId, 0, spectatorEndpoint.Token, "wss", cancellationToken: csc.Token);
 
 using var cmdHandler = new CommandSubscriber();
 cmdHandler.Subscribe<DanmuMsg>((msg) => Console.WriteLine($"[弹幕] {msg.UserName}: {msg.Msg}"));

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zast.Player.CUI.Bilibili;
 
 namespace Zast.Player.CUI.Scripts.Scenes
 {
@@ -22,12 +23,12 @@ namespace Zast.Player.CUI.Scripts.Scenes
         public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
         {
             var roomId = AnsiConsole.Prompt(new SelectionPrompt<int>()
-                .AddChoices(await RoomHistory.GetHistory())
+                .AddChoices(await RoomHistory.GetHistory(cancellationToken))
                 .Title("选择要进入的房间："));
 
 
-            var boostrapper = new Boostrapper(crawler, roomId);
-            await boostrapper.RunAsync(cancellationToken);
+            var boostrapper = new DanmakuBoostrapper(crawler, roomId);
+            await boostrapper.RunAsync(context, cancellationToken);
 
             return prev;
         }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zast.Player.CUI
+namespace Zast.Player.CUI.Util
 {
     public static class CommandWriterExtension
     {

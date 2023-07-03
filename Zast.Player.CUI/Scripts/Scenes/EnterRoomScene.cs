@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Zast.Player.CUI.Bilibili;
 
 namespace Zast.Player.CUI.Scripts.Scenes
 {
@@ -27,8 +28,8 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
             await RoomHistory.Add(roomId, cancellationToken);
 
-            var boostrapper = new Boostrapper(crawler, roomId);
-            await boostrapper.RunAsync(cancellationToken);
+            var boostrapper = new DanmakuBoostrapper(crawler, roomId);
+            await boostrapper.RunAsync(context, cancellationToken);
 
             return prev;
         }

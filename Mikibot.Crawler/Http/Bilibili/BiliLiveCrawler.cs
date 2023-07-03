@@ -15,7 +15,9 @@ namespace Mikibot.Crawler.Http.Bilibili
         public const int mxmk = 477317922;
         public const string mxmks = "477317922";
 
-        [Obsolete("不让抓了")]
+        public long Uid { get; set; }
+
+        [Obsolete("涓嶈鎶撲簡")]
         public async ValueTask<PersonalInfo> GetPersonalInfo(long uid, CancellationToken token = default)
         {
             var result = await GetAsync<BilibiliApiResponse<PersonalInfo>>($"https://api.bilibili.com/x/space/acc/info?mid={uid}", token);
@@ -32,7 +34,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data.Follower;
         }
 
-        [Obsolete("不让抓了")]
+        [Obsolete("涓嶈鎶撲簡")]
         public async ValueTask<PersonalInfo.LiveRoomDetail> GetPersonalLiveRoomDetail(long uid, CancellationToken token = default)
         {
             var result = await GetAsync<BilibiliApiResponse<PersonalInfo.LiveRoomDetail>>(
@@ -61,7 +63,7 @@ namespace Mikibot.Crawler.Http.Bilibili
             return (await GetRealRoomInfo(roomId, token)).RoomId;
         }
 
-        [Obsolete("不让抓了")]
+        [Obsolete("涓嶈鎶撲簡")]
         public async ValueTask<LiveToken> GetLiveTokenByUid(long uid, CancellationToken token = default)
         {
             var liveRoom = await GetPersonalLiveRoomDetail(uid, token);

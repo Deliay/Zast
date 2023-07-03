@@ -28,7 +28,7 @@ namespace Mikibot.Crawler.WebsocketCrawler.Client
             _semaphore.Wait();
         }
 
-        public async ValueTask ConnectAsync(string host, int port, long roomId, string auth, string protocol, CancellationToken token)
+        public async ValueTask ConnectAsync(string host, int port, long roomId, long uid, string auth, string protocol, CancellationToken token)
         {
             using var csc = CancellationTokenSource.CreateLinkedTokenSource(_csc.Token, token);
             var safeToken = csc.Token;
@@ -37,7 +37,7 @@ namespace Mikibot.Crawler.WebsocketCrawler.Client
 
             await ws.ConnectAsync(uri, safeToken);
 
-            await SendAsync(BasePacket.Auth(roomId, auth), safeToken);
+            await SendAsync(BasePacket.Auth(roomId, uid, auth), safeToken);
 
             _ = Keeplive(safeToken);
 

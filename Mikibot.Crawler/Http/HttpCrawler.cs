@@ -41,6 +41,11 @@ namespace Mikibot.Crawler.Http
             return await JsonSerializer.DeserializeAsync<T>(stream, JsonParseOptions, token);
         }
 
+        public void SetCookie(string cookie)
+        {
+            client.DefaultRequestHeaders.Add("cookie", cookie);
+        }
+
         public void Dispose()
         {
             GC.SuppressFinalize(this);

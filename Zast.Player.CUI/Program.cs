@@ -5,16 +5,20 @@ using Zast.Player.CUI;
 using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Scripts.Scenes;
 using Zast.Player.CUI.Util;
+using Zast.Player.CUI.Bilibili;
 
 IServiceCollection builder = new ServiceCollection();
 
+builder.AddSingleton<CookieStore>();
 builder.AddSingleton<BiliLiveCrawler>();
+builder.AddSingleton<BiliBasicInfoCrawler>();
 
 builder.AddSingleton<ScriptManager>();
 
 builder.AddSingleton<MainMenuScene>();
 builder.AddAllSingleton<HistoryRoomScene, IMenuItem>();
 builder.AddAllSingleton<EnterRoomScene, IMenuItem>();
+builder.AddAllSingleton<LoginScene, IMenuItem>();
 builder.AddAllSingleton<ExitScene, IMenuItem>();
 
 

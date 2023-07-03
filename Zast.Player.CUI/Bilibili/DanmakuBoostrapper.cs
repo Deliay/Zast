@@ -8,16 +8,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
+using Zast.Player.CUI.Scripts;
+using Zast.Player.CUI.Util;
 
-namespace Zast.Player.CUI
+namespace Zast.Player.CUI.Bilibili
 {
-    public class Boostrapper
+    public class DanmakuBoostrapper
     {
         private static readonly HttpClient client = new();
         private readonly BiliLiveCrawler crawler;
         private readonly int roomId;
 
-        public Boostrapper(BiliLiveCrawler biliLiveCrawler, int roomId)
+        public DanmakuBoostrapper(BiliLiveCrawler biliLiveCrawler, int roomId)
         {
             this.crawler = biliLiveCrawler;
             this.roomId = roomId;
@@ -46,7 +48,7 @@ namespace Zast.Player.CUI
             });
         }
 
-        private async Task RunDanmakuHandler(CancellationToken cancellationToken = default)
+        private async Task RunDanmakuHandler(ScriptContext context, CancellationToken cancellationToken = default)
         {
             Console.Clear();
 
@@ -58,14 +60,24 @@ namespace Zast.Player.CUI
             int damakuCount = 0;
             DateTime start = DateTime.Now;
 
+            AnsiConsole.MarkupLine("[yellow]Esc退出当前直播间[/]");
+            AnsiConsole.MarkupLine("[grey]正在获得房间地址...[/]");
             var info = await crawler.GetRealRoomInfo(roomId, cancellationToken);
 
             await PrintLiveStatus(info.RoomId, cancellationToken);
 
-            AnsiConsole.MarkupLine("[yellow]Esc退出当前直播间[/]");
+            if (context.TryGet(out CookieInfo cookie))
+            {
+                AnsiConsole.MarkupLine($"[lime]检测倒你已经登录，将以 [teal]{cookie.Name}[/] 的身份进入直播间[/]");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"[yellow]你还没有登录，B站将在游客观看10分钟后屏蔽所有弹幕用户名称。[/]");
+            }
+
             await AnsiConsole.Status().StartAsync("连接中...", async (ctx) =>
             {
-                await foreach (var @event in eventStreaming.RunAsync(info.RoomId, cancellationToken))
+                await foreach (var @event in eventStreaming.RunAsync(info.RoomId, cookie.Uid, cancellationToken))
                 {
                     if (@event is CommandBase<OnlineRankCount> ranking)
                     {
@@ -83,7 +95,7 @@ namespace Zast.Player.CUI
                     {
                         var now = DateTime.Now;
                         var duration = (now - start).TotalMinutes;
-                        damakuSpeed = $"{((++damakuCount) / duration):F}";
+                        damakuSpeed = $"{(++damakuCount) / duration:F}";
 
                         if (now - start > TimeSpan.FromMinutes(1))
                         {
@@ -118,18 +130,18 @@ namespace Zast.Player.CUI
             csc.Cancel();
         }
 
-        public async ValueTask RunAsync(CancellationToken cancellationToken = default)
+        public async ValueTask RunAsync(ScriptContext context, CancellationToken cancellationToken = default)
         {
             using var csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var token = csc.Token;
 
             try
             {
-                await Task.WhenAll(RunDanmakuHandler(token), Quit(csc, token));
+                await Task.WhenAll(RunDanmakuHandler(context, token), Quit(csc, token));
             }
-            catch
+            catch (Exception e)
             {
-
+                AnsiConsole.MarkupLine($"[red]发生错误{e.Message}[/]");
             }
         }
     }

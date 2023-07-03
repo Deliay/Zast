@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
 
-namespace Zast.Player.CUI
+namespace Zast.Player.CUI.Bilibili
 {
     public class RoomStreamWhisper : IDisposable
     {

@@ -25,6 +25,7 @@ namespace Zast.Player.CUI.Scripts
 
         public void Set<T>(T value)
         {
+            context.Remove(typeof(T));
             context.Add(typeof(T), value!);
         }
     }

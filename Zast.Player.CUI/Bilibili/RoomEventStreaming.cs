@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zast.Player.CUI
+namespace Zast.Player.CUI.Bilibili
 {
     public class RoomEventStreaming : IDisposable
     {
@@ -29,7 +29,7 @@ namespace Zast.Player.CUI
             GC.SuppressFinalize(this);
         }
 
-        public async IAsyncEnumerable<ICommandBase> RunAsync(long roomId, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<ICommandBase> RunAsync(long roomId, long uid, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             using var _csc = csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -38,7 +38,7 @@ namespace Zast.Player.CUI
             foreach (var spectatorHost in spectatorEndpoint.Hosts)
             {
                 using var wsClient = new WebsocketClient();
-                await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, spectatorEndpoint.Token, "wss", _csc.Token);
+                await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, uid, spectatorEndpoint.Token, "wss", _csc.Token);
 
                 await foreach (var @event in wsClient.Events(_csc.Token))
                 {

@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Zast.Player.CUI
+namespace Zast.Player.CUI.Bilibili
 {
     public class RoomStreamStreamingProxy
     {
