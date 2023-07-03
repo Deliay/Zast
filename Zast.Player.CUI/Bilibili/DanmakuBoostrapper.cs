@@ -34,7 +34,7 @@ namespace Zast.Player.CUI.Bilibili
 
             var image = new CanvasImage(stream)
             {
-                MaxWidth = 32
+                MaxWidth = 16
             };
 
             var status = basic.LiveStatus == 0 ? "[grey]休息中[/]" : $"[lime]直播中[/] {basic.Title}";
