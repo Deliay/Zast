@@ -35,7 +35,7 @@ namespace Zast.UI.Crawler
             var realRoomId = await crawler.GetRealRoomId(roomId, csc.Token);
             var spectatorEndpoint = await crawler.GetLiveToken(realRoomId, csc.Token);
             var spectatorHost = spectatorEndpoint.Hosts[0];
-            await ws.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, realRoomId, spectatorEndpoint.Token, "wss", cancellationToken: csc.Token);
+            await ws.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, realRoomId, 0, spectatorEndpoint.Token, "wss", cancellationToken: csc.Token);
 
             _ = Consume(csc.Token);
         }

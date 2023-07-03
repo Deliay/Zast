@@ -7,14 +7,27 @@ namespace Zast.Player.CUI.Util
         public static async Task Save<T>(string path, T data, CancellationToken cancellationToken = default)
         {
             var tmpFileName = $"{path}_tmp";
-            using var tmpStream = File.OpenWrite(tmpFileName);
-            await JsonSerializer.SerializeAsync(tmpStream, data, cancellationToken: cancellationToken);
-
+            {
+                if (File.Exists(tmpFileName))
+                {
+                    File.Delete(tmpFileName);
+                }
+                using var tmpStream = File.OpenWrite(tmpFileName);
+                await JsonSerializer.SerializeAsync(tmpStream, data, cancellationToken: cancellationToken);
+            }
             var tmpMoveFileName = $"{path}_tmp_mov";
+            try
+            {
 
-            File.Move(path, tmpMoveFileName);
-            File.Move(tmpFileName, path);
-            File.Delete(tmpMoveFileName);
+                File.Move(path, tmpMoveFileName);
+                File.Move(tmpFileName, path);
+                File.Delete(tmpMoveFileName);
+            }
+            finally
+            {
+                if (File.Exists(tmpFileName)) File.Delete(tmpFileName);
+                if (File.Exists(tmpMoveFileName)) File.Delete(tmpMoveFileName);
+            }
         }
 
         public static async Task<T?> Load<T>(string path, CancellationToken cancellationToken = default)

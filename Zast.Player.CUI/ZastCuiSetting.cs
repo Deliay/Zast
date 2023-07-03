@@ -4,17 +4,18 @@ namespace Zast.Player.CUI
 {
     public class ZastCuiSetting
     {
-        public static List<(Action<bool, ZastCuiSetting>, string)> GetSettingItems(ZastCuiSetting setting)
+        public readonly static IReadOnlyDictionary<string, (Action<ZastCuiSetting, bool>, Func<ZastCuiSetting, bool>, string)> SettingItems
+            = new Dictionary<string, (Action<ZastCuiSetting, bool>, Func<ZastCuiSetting, bool>, string)>()
         {
-            return new()
-            {
-                ((v, s) => s.EnabeldWhisper = v, "启用Whisper进行实时直播语音识别 [red](不推荐，不稳定，效果差)[/]"),
-                ((v, s) => s.EnabledAudio = v, "播放直播语音流 [grey]使用BASS[/]")
-            };
-        }
+            { "EnabeldWhisper", ((s, v) => s.EnabeldWhisper = v, s => s.EnabeldWhisper, "(实验) 启用Whisper进行实时直播语音识别 [red](不推荐)[/]") },
+            { "EnabledAudio", ((s, v) => s.EnabledAudio = v, s => s.EnabledAudio, "(实验) 播放直播语音流 [grey]使用BASS[/]") },
+            { "DisableWebExport", ((s, v) => s.DisableWebExport = v, s => s.DisableWebExport, "禁用网页输出") },
+        };
 
         public bool EnabeldWhisper { get; set; }
 
         public bool EnabledAudio { get; set; }
+
+        public bool DisableWebExport { get; set; }
     }
 }

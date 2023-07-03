@@ -14,11 +14,13 @@ builder.AddSingleton<BiliLiveCrawler>();
 builder.AddSingleton<BiliBasicInfoCrawler>();
 
 builder.AddSingleton<ScriptManager>();
+builder.AddSingleton<ZastCuiSettingRepository>();
 
 builder.AddSingleton<MainMenuScene>();
 builder.AddAllSingleton<HistoryRoomScene, IMenuItem>();
 builder.AddAllSingleton<EnterRoomScene, IMenuItem>();
 builder.AddAllSingleton<LoginScene, IMenuItem>();
+builder.AddAllSingleton<SettingScene, IMenuItem>();
 builder.AddAllSingleton<ExitScene, IMenuItem>();
 
 

@@ -25,11 +25,11 @@ namespace Zast.Player.CUI.Bilibili
             HttpClient.DefaultRequestHeaders.Add("Origin", "https://live.bilibili.com");
         }
         private readonly BiliLiveCrawler crawler;
-        private readonly int roomId;
+        private readonly long roomId;
         private readonly WhisperFactory whisperFactory;
         private readonly WhisperProcessor whisper;
 
-        public RoomStreamWhisper(BiliLiveCrawler crawler, int roomId)
+        public RoomStreamWhisper(BiliLiveCrawler crawler, long roomId)
         {
             this.crawler = crawler;
             this.roomId = roomId;

@@ -1,4 +1,5 @@
 ﻿using Mikibot.Crawler.Http.Bilibili;
+using Mikibot.Crawler.Http.Bilibili.Model;
 using Mikibot.Crawler.WebsocketCrawler.Data.Commands;
 using Mikibot.Crawler.WebsocketCrawler.Data.Commands.KnownCommand;
 using Spectre.Console;
@@ -8,6 +9,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
+using Zast.Player.CUI.Bilibili.Streaming;
+using Zast.Player.CUI.Bilibili.Streaming.AudioPlayer;
 using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Util;
 
@@ -16,28 +19,26 @@ namespace Zast.Player.CUI.Bilibili
     public class DanmakuBoostrapper
     {
         private static readonly HttpClient client = new();
-        private readonly BiliLiveCrawler crawler;
-        private readonly int roomId;
+        private readonly BiliLiveCrawler liveCrawler;
+        private readonly long roomId;
 
-        public DanmakuBoostrapper(BiliLiveCrawler biliLiveCrawler, int roomId)
+        public DanmakuBoostrapper(BiliLiveCrawler biliLiveCrawler, long roomId)
         {
-            this.crawler = biliLiveCrawler;
+            this.liveCrawler = biliLiveCrawler;
             this.roomId = roomId;
         }
 
         private async Task PrintLiveStatus(long roomId, CancellationToken cancellationToken)
         {
 
-            var basic = await crawler.GetLiveRoomInfo(roomId, cancellationToken);
-
-            using var stream = await client.GetStreamAsync(basic.UserCover, cancellationToken);
+            using var stream = await client.GetStreamAsync(roomInfo.UserCover, cancellationToken);
 
             var image = new CanvasImage(stream)
             {
                 MaxWidth = 16
             };
 
-            var status = basic.LiveStatus == 0 ? "[grey]休息中[/]" : $"[lime]直播中[/] {basic.Title}";
+            var status = roomInfo.LiveStatus == 0 ? "[grey]休息中[/]" : $"[lime]直播中[/] {roomInfo.Title}";
 
             AnsiConsole.Write(new Panel(image)
             {
@@ -52,7 +53,7 @@ namespace Zast.Player.CUI.Bilibili
         {
             Console.Clear();
 
-            using var eventStreaming = new RoomEventStreaming(crawler);
+            using var eventStreaming = new RoomEventStreaming(liveCrawler);
 
             var online = 0;
             var lastEnter = "";
@@ -62,7 +63,7 @@ namespace Zast.Player.CUI.Bilibili
 
             AnsiConsole.MarkupLine("[yellow]Esc退出当前直播间[/]");
             AnsiConsole.MarkupLine("[grey]正在获得房间地址...[/]");
-            var info = await crawler.GetRealRoomInfo(roomId, cancellationToken);
+            var info = await liveCrawler.GetRealRoomInfo(roomId, cancellationToken);
 
             await PrintLiveStatus(info.RoomId, cancellationToken);
 
@@ -110,7 +111,7 @@ namespace Zast.Player.CUI.Bilibili
 
         private async Task RunWhisper(StatusContext ctx, CancellationToken cancellationToken = default)
         {
-            using var rmtpStreaming = new RoomStreamWhisper(crawler, roomId);
+            using var rmtpStreaming = new RoomStreamWhisper(liveCrawler, roomId);
             ctx.Refresh();
             await foreach (var (curr, last) in rmtpStreaming.RunAsync(cancellationToken))
             {
@@ -118,6 +119,29 @@ namespace Zast.Player.CUI.Bilibili
                     await Task.Delay((curr.End - last.Start) * 0.25, cancellationToken);
                 AnsiConsole.MarkupLine($"[grey]直播[/] [silver]{curr.Text.EscapeMarkup()}[/]");
             }
+        }
+
+        private async Task RunLiveStream(ScriptContext ctx, CancellationToken cancellationToken = default)
+        {
+            if (!ctx.TryGet<ZastCuiSetting>(out var setting)) throw new InvalidCastException();
+
+            if (!setting.EnabledAudio)
+            {
+                return;
+            }
+            if (roomInfo.LiveStatus == 0)
+            {
+                return;
+            }
+
+            AnsiConsole.MarkupLine($"[yellow]提示[/] 你开启了声音播放，即将播放直播流中的声音");
+            using var streamCrawler = new BiliLiveStreamCrawler();
+            using var rmtpStreaming = new RoomStreamSupplier(liveCrawler, streamCrawler);
+            using var audioPlayer = new StreamingAudioPlayer();
+
+            await rmtpStreaming
+                .To(audioPlayer.Handle)
+                .RunAsync(roomId, cancellationToken);
         }
 
         private static async Task Quit(CancellationTokenSource csc, CancellationToken cancellationToken)
@@ -130,6 +154,8 @@ namespace Zast.Player.CUI.Bilibili
             csc.Cancel();
         }
 
+        private LiveRoomInfo roomInfo;
+
         public async ValueTask RunAsync(ScriptContext context, CancellationToken cancellationToken = default)
         {
             using var csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -137,6 +163,7 @@ namespace Zast.Player.CUI.Bilibili
 
             try
             {
+                roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, cancellationToken);
                 await Task.WhenAll(RunDanmakuHandler(context, token), Quit(csc, token));
             }
             catch (Exception e)

@@ -10,7 +10,17 @@ namespace Mikibot.Crawler.Http
 {
     public class HttpCrawler : IDisposable
     {
-        private readonly HttpClient client = new();
+        protected readonly HttpClient client = new();
+
+        protected void AddHeader(string key, string value)
+        {
+            client.DefaultRequestHeaders.Add(key, value);
+        }
+
+        public void SetCookie(string cookie)
+        {
+            AddHeader("cookie", cookie);
+        }
 
         protected JsonSerializerOptions JsonParseOptions { get; set; } = new JsonSerializerOptions()
         {
@@ -39,11 +49,6 @@ namespace Mikibot.Crawler.Http
             var raw = await client.PostAsync(url, ctx, token);
             var stream = raw.Content.ReadAsStream(token);
             return await JsonSerializer.DeserializeAsync<T>(stream, JsonParseOptions, token);
-        }
-
-        public void SetCookie(string cookie)
-        {
-            client.DefaultRequestHeaders.Add("cookie", cookie);
         }
 
         public void Dispose()
