@@ -52,7 +52,7 @@ namespace Zast.Player.CUI.Bilibili
         {
             Console.Clear();
 
-            using var eventStreaming = new RoomEventStreaming(crawler, roomId);
+            using var eventStreaming = new RoomEventStreaming(crawler);
 
             var online = 0;
             var lastEnter = "";

@@ -8,5 +8,6 @@ namespace Zast.Player.CUI.Scripts
 {
     public interface IMenuItem : IScript
     {
+        public Type Category { get; }
     }
 }

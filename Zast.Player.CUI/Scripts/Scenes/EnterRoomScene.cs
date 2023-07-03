@@ -20,6 +20,8 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
         public string Name => "输入房间号...";
 
+        public Type Category => typeof(MainMenuScene);
+
         public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
         {
             var roomId = AnsiConsole.Prompt(new TextPrompt<int>("[gray]请输入房间号：[/]")

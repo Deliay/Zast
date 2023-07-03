@@ -19,6 +19,7 @@ namespace Zast.Player.CUI.Scripts.Scenes
         }
 
         public string Name => "历史记录...";
+        public Type Category => typeof(MainMenuScene);
 
         public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
         {

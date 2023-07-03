@@ -21,7 +21,7 @@ namespace Zast.Player.CUI.Scripts.Scenes
             BiliBasicInfoCrawler basicInfoCrawler,
             CookieStore cookieStore)
         {
-            MenuItems = menuItems;
+            MenuItems = menuItems.Where(i => i.Category == typeof(MainMenuScene));
             this.crawler = crawler;
             this.basicInfoCrawler = basicInfoCrawler;
             this.cookieStore = cookieStore;
