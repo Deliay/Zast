@@ -35,7 +35,8 @@ namespace Zast.Player.CUI.Bilibili.Streaming.PipeUtil
                     _lock.Release();
                 }
             }
-            throw new InvalidDataException();
+            else 
+                throw new InvalidDataException();
         }
 
         public async Task Start(CancellationToken cancellationToken)

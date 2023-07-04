@@ -46,15 +46,15 @@ namespace Mikibot.Crawler.Http.Bilibili
 
         public async ValueTask<LiveInitInfo> GetRealRoomInfo(long roomId, CancellationToken token = default)
         {
-            if (roomIdMappingCache.ContainsKey(roomId))
+            if (roomIdMappingCache.TryGetValue(roomId, out LiveInitInfo value))
             {
-                return roomIdMappingCache[roomId];
+                return value;
             }
             var roomUrl = $"http://api.live.bilibili.com/room/v1/Room/room_init?id={roomId}";
             var roomResult = await GetAsync<BilibiliApiResponse<LiveInitInfo>>(roomUrl, token);
             roomResult.AssertCode();
 
-            roomIdMappingCache.Add(roomId, roomResult.Data);
+            roomIdMappingCache.TryAdd(roomId, roomResult.Data);
             return roomResult.Data;
         }
 

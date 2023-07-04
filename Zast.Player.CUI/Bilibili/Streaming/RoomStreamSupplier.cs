@@ -22,7 +22,7 @@ namespace Zast.Player.CUI.Bilibili.Streaming
             csc = new CancellationTokenSource();
         }
 
-        private Random _random = new();
+        private readonly Random _random = new();
         private async ValueTask<string?> GetLiveStreamAddress(long roomId, CancellationToken cancellationToken)
         {
             var realRoomid = await liveCrawler.GetRealRoomId(roomId, cancellationToken);

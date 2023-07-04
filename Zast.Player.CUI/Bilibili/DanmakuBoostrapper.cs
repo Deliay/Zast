@@ -135,13 +135,17 @@ namespace Zast.Player.CUI.Bilibili
             }
 
             AnsiConsole.MarkupLine($"[yellow]提示[/] 你开启了声音播放，即将播放直播流中的声音");
-            using var streamCrawler = new BiliLiveStreamCrawler();
-            using var rmtpStreaming = new RoomStreamSupplier(liveCrawler, streamCrawler);
-            using var audioPlayer = new StreamingAudioPlayer();
+            using var streamProxy = new RoomStreamStreamingProxy(liveCrawler, roomId);
 
-            await rmtpStreaming
-                .To(audioPlayer.Handle)
-                .RunAsync(roomId, cancellationToken);
+            Task web = streamProxy.RunAsync(cancellationToken);
+
+            using var bass = new UrlBassPlayer();
+
+            bass.Play(RoomStreamStreamingProxy.WaveEndpoint, cancellationToken);
+
+            var tcs = new TaskCompletionSource();
+            cancellationToken.Register(() => tcs.SetResult());
+            await tcs.Task;
         }
 
         private static async Task Quit(CancellationTokenSource csc, CancellationToken cancellationToken)
