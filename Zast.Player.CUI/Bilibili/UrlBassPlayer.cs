@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,7 +24,13 @@ namespace Zast.Player.CUI.Bilibili
         public IDisposable Play(string url, CancellationToken cancellationToken)
         {
             cancellationToken.Register(() => Bass.Stop());
-            Bass.Init();
+            
+            var flag = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                ? DeviceInitFlags.DMix
+                : DeviceInitFlags.Default;
+
+            Bass.Init(Flags: flag);
+
             this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, (_, p, _) => LoadingProgressUpdated?.Invoke(p));
             Bass.ChannelPlay(this.streamIdx);
             return this;
