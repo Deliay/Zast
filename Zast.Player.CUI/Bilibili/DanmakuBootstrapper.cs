@@ -141,7 +141,7 @@ namespace Zast.Player.CUI.Bilibili
             Task web = streamProxy.RunAsync(cancellationToken);
 
             using var bass = new UrlBassPlayer();
-            bass.LoadingProgressUpdated += (size) => _voiceCache = $" | {size / 1024}kb";
+            bass.LoadingProgressUpdated += (size, time) => _voiceCache = $" | {size / 1024}kb {time.Minutes}:{time.Seconds}";
 
             bass.Play(RoomStreamStreamingProxy.WaveEndpoint, cancellationToken);
 

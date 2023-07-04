@@ -11,7 +11,7 @@ namespace Zast.Player.CUI.Bilibili
 {
     public class UrlBassPlayer : IDisposable
     {
-        public event Action<long>? LoadingProgressUpdated;
+        public event Action<long, TimeSpan>? LoadingProgressUpdated;
 
         private int streamIdx;
 
@@ -35,7 +35,11 @@ namespace Zast.Player.CUI.Bilibili
             if (!Bass.Init(Flags: flag))
                 throw new InvalidOperationException("BASS initialize failed");
 
-            this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, (_, p, _) => LoadingProgressUpdated?.Invoke(p));
+            this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, (_, p, _) =>
+            {
+                var time = Bass.ChannelBytes2Seconds(this.streamIdx, Bass.ChannelGetPosition(this.streamIdx));
+                LoadingProgressUpdated?.Invoke(p, TimeSpan.FromSeconds(time));
+            });
             Bass.ChannelPlay(this.streamIdx);
             return this;
         }
