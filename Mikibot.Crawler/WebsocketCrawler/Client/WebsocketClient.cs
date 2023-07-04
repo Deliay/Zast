@@ -95,6 +95,8 @@ namespace Mikibot.Crawler.WebsocketCrawler.Client
             {
                 foreach (var data in ProcessPacket(raw))
                 {
+                    if (token.IsCancellationRequested) yield break;
+
                     yield return data;
                 }
             }

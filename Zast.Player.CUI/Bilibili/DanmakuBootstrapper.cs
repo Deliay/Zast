@@ -14,13 +14,13 @@ using Zast.Player.CUI.Util;
 
 namespace Zast.Player.CUI.Bilibili
 {
-    public class DanmakuBoostrapper
+    public class DanmakuBootstrapper
     {
         private static readonly HttpClient client = new();
         private readonly BiliLiveCrawler liveCrawler;
         private readonly long roomId;
 
-        public DanmakuBoostrapper(BiliLiveCrawler biliLiveCrawler, long roomId)
+        public DanmakuBootstrapper(BiliLiveCrawler biliLiveCrawler, long roomId)
         {
             this.liveCrawler = biliLiveCrawler;
             this.roomId = roomId;
@@ -78,6 +78,7 @@ namespace Zast.Player.CUI.Bilibili
             {
                 await foreach (var @event in eventStreaming.RunAsync(info.RoomId, cookie.Uid, cancellationToken))
                 {
+                    if (cancellationToken.IsCancellationRequested) return;
                     if (@event is CommandBase<OnlineRankCount> ranking)
                     {
                         online = ranking.Data.Count;
@@ -168,7 +169,7 @@ namespace Zast.Player.CUI.Bilibili
 
             try
             {
-                roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, cancellationToken);
+                roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, token);
                 await Task.WhenAny(
                     RunDanmakuHandler(context, token),
                     RunLiveStream(context, token),

@@ -62,7 +62,11 @@ namespace Zast.Player.CUI.Bilibili
 
             var res = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
 
-            return await res.Content.ReadAsStreamAsync(token);
+            var stream = await res.Content.ReadAsStreamAsync(token);
+
+            await Task.Delay(TimeSpan.FromSeconds(2), token);
+
+            return stream;
         }
         private readonly Stream _stream = new MemoryStream();
         private async Task WriteWaveStream(PipeWriter writer, CancellationToken token)
@@ -81,6 +85,10 @@ namespace Zast.Player.CUI.Bilibili
                         .OutputToPipe(new StreamPipeSink(writer.AsStream()), opt => opt
                             .DisableChannel(Channel.Video)
                             .WithCustomArgument("-f wav"))
+                        .WithLogLevel(FFMpegLogLevel.Error)
+                        .CancellableThrough(token)
+                        .NotifyOnOutput((progress) => AnsiConsole.MarkupLine($"[grey]ff[/] {progress.EscapeMarkup()}"))
+                        .NotifyOnError((progress) => AnsiConsole.MarkupLine($"[grey]ff[/] [red]{progress.EscapeMarkup()}[/]"))
                         .ProcessAsynchronously();
                     sw.Stop();
                     AnsiConsole.MarkupLine($"[grey]系统[/] [red]音频流终止，持续 {sw.Elapsed.TotalSeconds}s[/]");
@@ -94,6 +102,10 @@ namespace Zast.Player.CUI.Bilibili
                 catch (Exception e)
                 {
                     AnsiConsole.WriteException(e);
+                }
+                finally
+                {
+                    
                 }
             }
 

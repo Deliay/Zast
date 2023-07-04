@@ -28,7 +28,7 @@ namespace Zast.Player.CUI.Scripts.Scenes
                 .Title("选择要进入的房间："));
 
 
-            var boostrapper = new DanmakuBoostrapper(crawler, roomId);
+            var boostrapper = new DanmakuBootstrapper(crawler, roomId);
             await boostrapper.RunAsync(context, cancellationToken);
 
             return prev;

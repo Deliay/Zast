@@ -40,6 +40,7 @@ namespace Zast.Player.CUI.Bilibili
 
                 await foreach (var @event in wsClient.Events(_csc.Token))
                 {
+                    if (_csc.IsCancellationRequested) yield break;
                     if (@event is Normal normal)
                     {
                         var cmd = ICommandBase.Parse(normal.RawContent);

@@ -30,7 +30,7 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
             await RoomHistory.Add(roomId, cancellationToken);
 
-            var boostrapper = new DanmakuBoostrapper(crawler, roomId);
+            var boostrapper = new DanmakuBootstrapper(crawler, roomId);
             await boostrapper.RunAsync(context, cancellationToken);
 
             return prev;
