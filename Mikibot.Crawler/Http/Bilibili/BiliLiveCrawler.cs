@@ -3,6 +3,7 @@ using Mikibot.Crawler.Http.Bilibili.Model.LiveServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -144,6 +145,37 @@ namespace Mikibot.Crawler.Http.Bilibili
             body.Headers.Add("cookie", cookie);
 
             var res = await PostFormAsync<BilibiliApiResponse<object>>("http://api.vc.bilibili.com/web_im/v1/web_im/send_msg", body, token);
+            res.AssertCode();
+        }
+
+        public async ValueTask SendDanmaku(string msg, long roomId, bool isEmoji, CancellationToken cancellationToken = default)
+        {
+            var cookie = client.DefaultRequestHeaders.GetValues("cookie").FirstOrDefault()!;
+            var indexOfCsrf = cookie.IndexOf("bili_jct=") + 9;
+            if (indexOfCsrf == -1) throw new InvalidDataException("Cookie not include any csrf token, consider update you cookie!");
+
+            var csrf = cookie[indexOfCsrf..cookie.IndexOf(';', indexOfCsrf)];
+
+            var args = new Dictionary<string, string>()
+            {
+                { "bubble", $"2" },
+                { "msg", $"{msg}" },
+                { "roomid", $"{roomId}" },
+                { "color", "9920249" },
+                { "mode", "4" },
+                { "fontsize", "25" },
+                { "csrf", csrf },
+                { "csrf_token", csrf },
+                { "rnd", $"{DateTimeOffset.Now.ToUnixTimeSeconds()}" },
+            };
+
+            if (isEmoji)
+            {
+                args.Add("dm_type", "1");
+            }
+            var body = new FormUrlEncodedContent(args);
+
+            var res = await PostFormAsync<BilibiliApiResponse<object>>("http://api.vc.bilibili.com/web_im/v1/web_im/send_msg", body, cancellationToken);
             res.AssertCode();
         }
     }

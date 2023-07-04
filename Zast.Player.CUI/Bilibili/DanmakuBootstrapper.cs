@@ -1,11 +1,14 @@
 ﻿using Mikibot.Crawler.Http.Bilibili;
 using Mikibot.Crawler.Http.Bilibili.Model;
+using Mikibot.Crawler.Http.Bilibili.Model.LiveServer;
 using Mikibot.Crawler.WebsocketCrawler.Data.Commands;
 using Mikibot.Crawler.WebsocketCrawler.Data.Commands.KnownCommand;
 using Spectre.Console;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
@@ -47,23 +50,32 @@ namespace Zast.Player.CUI.Bilibili
             });
         }
 
-        private async Task RunDanmakuHandler(ScriptContext context, CancellationToken cancellationToken = default)
+        private int online = 0;
+        private string lastEnter = "";
+        private string damakuSpeed = "N/A";
+        private int damakuCount = 0;
+
+        private async Task StatusPanel(ScriptContext context, CancellationToken cancellationToken)
         {
-            Console.Clear();
+            await AnsiConsole.Status().Start("连接中...", async (ctx) =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
+                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/]{_voiceCache}");
+                }
+            });
+        }
 
+        private async Task BottomPanel(ScriptContext context, CancellationToken cancellationToken)
+        {
+
+        }
+
+        private async Task Danmaku(ScriptContext context, CancellationToken cancellationToken)
+        {
             using var eventStreaming = new RoomEventStreaming(liveCrawler);
-
-            var online = 0;
-            var lastEnter = "";
-            var damakuSpeed = "N/A";
-            int damakuCount = 0;
-            DateTime start = DateTime.Now;
-
-            AnsiConsole.MarkupLine("[yellow]Esc退出当前直播间[/]");
-            AnsiConsole.MarkupLine("[grey]正在获得房间地址...[/]");
-            var info = await liveCrawler.GetRealRoomInfo(roomId, cancellationToken);
-
-            await PrintLiveStatus(info.RoomId, cancellationToken);
+            context.TryGet(out LiveInitInfo info);
 
             if (context.TryGet(out CookieInfo cookie))
             {
@@ -74,38 +86,53 @@ namespace Zast.Player.CUI.Bilibili
                 AnsiConsole.MarkupLine($"[yellow]你还没有登录，B站将在游客观看10分钟后屏蔽所有弹幕用户名称。[/]");
             }
 
-            await AnsiConsole.Status().StartAsync("连接中...", async (ctx) =>
-            {
-                await foreach (var @event in eventStreaming.RunAsync(info.RoomId, cookie.Uid, cancellationToken))
-                {
-                    if (cancellationToken.IsCancellationRequested) return;
-                    if (@event is CommandBase<OnlineRankCount> ranking)
-                    {
-                        online = ranking.Data.Count;
-                    }
-                    else if (@event is CommandBase<InteractWord> interact)
-                    {
-                        lastEnter = interact.Data.UserName.EscapeMarkup();
-                    }
-                    else
-                    {
-                        await @event.Write();
-                    }
-                    if (@event is CommandBase<DanmuMsg>)
-                    {
-                        var now = DateTime.Now;
-                        var duration = (now - start).TotalMinutes;
-                        damakuSpeed = $"{(++damakuCount) / duration:F}";
+            DateTime start = DateTime.Now;
 
-                        if (now - start > TimeSpan.FromMinutes(1))
-                        {
-                            start = now;
-                            damakuCount = 0;
-                        }
-                    }
-                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/]{_voiceCache}");
+            await foreach (var @event in eventStreaming.RunAsync(info.RoomId, cookie.Uid, cancellationToken))
+            {
+                if (cancellationToken.IsCancellationRequested) return;
+                if (@event is CommandBase<OnlineRankCount> ranking)
+                {
+                    online = ranking.Data.Count;
                 }
-            });
+                else if (@event is CommandBase<InteractWord> interact)
+                {
+                    lastEnter = interact.Data.UserName.EscapeMarkup();
+                }
+                else
+                {
+                    await @event.Write();
+                }
+                if (@event is CommandBase<DanmuMsg>)
+                {
+                    var now = DateTime.Now;
+                    var duration = (now - start).TotalMinutes;
+                    damakuSpeed = $"{(++damakuCount) / duration:F}";
+
+                    if (now - start > TimeSpan.FromMinutes(1))
+                    {
+                        start = now;
+                        damakuCount = 0;
+                    }
+                }
+            }
+        }
+
+        private async Task RunDanmakuHandler(ScriptContext context, CancellationToken cancellationToken = default)
+        {
+            Console.Clear();
+
+            AnsiConsole.MarkupLine("[yellow]Esc退出当前直播间[/]");
+            AnsiConsole.MarkupLine("[grey]正在获得房间地址...[/]");
+            var info = await liveCrawler.GetRealRoomInfo(roomId, cancellationToken);
+            context.Set(info);
+
+            await PrintLiveStatus(info.RoomId, cancellationToken);
+
+            await Task.WhenAll(
+                Danmaku(context, cancellationToken),
+                BottomPanel(context, cancellationToken)
+            );
         }
 
         private async Task RunWhisper(StatusContext ctx, CancellationToken cancellationToken = default)
