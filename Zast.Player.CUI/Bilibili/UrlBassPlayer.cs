@@ -1,4 +1,5 @@
 ﻿using ManagedBass;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,10 @@ namespace Zast.Player.CUI.Bilibili
                 ? DeviceInitFlags.DMix
                 : DeviceInitFlags.Default;
 
-            Bass.Init(Flags: flag);
+            AnsiConsole.MarkupLine($"[grey]BASS[/] Bass run in {flag}");
+
+            if (!Bass.Init(Flags: flag))
+                throw new InvalidOperationException("BASS initialize failed");
 
             this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, (_, p, _) => LoadingProgressUpdated?.Invoke(p));
             Bass.ChannelPlay(this.streamIdx);
