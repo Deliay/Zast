@@ -102,7 +102,7 @@ namespace Zast.Player.CUI.Bilibili
                 catch (InstanceFileNotFoundException)
                 {
                     AnsiConsole.MarkupLine($"[grey]ff[/] [red]未找到ffmpeg，请将其安装到环境变量中[/]");
-                    break;
+                    throw;
                 }
                 catch (OperationCanceledException) {}
                 catch (Exception e)
@@ -149,6 +149,10 @@ namespace Zast.Player.CUI.Bilibili
                         await Task.Delay(TimeSpan.FromSeconds(3));
                     }
                     catch (OperationCanceledException) {}
+                    catch (InstanceFileNotFoundException)
+                    {
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         AnsiConsole.WriteException(e);
