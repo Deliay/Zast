@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 using FFMpegCore.Enums;
 using System.IO;
 using System.IO.Pipelines;
+using System.IO.Pipes;
+using Spectre.Console;
+using System.Buffers;
 
 namespace Zast.Player.CUI.Bilibili
 {
@@ -33,7 +36,10 @@ namespace Zast.Player.CUI.Bilibili
         public RoomStreamStreamingProxy(BiliLiveCrawler crawler, long roomId)
         {
             this.host = new SimpleHostBuilder()
-                .ConfigureServer(server => server.ListenLocalPort(11111))
+                .ConfigureServer(server =>
+                {
+                    server.ListenLocalPort(11111);
+                })
                 .Build();
             this.crawler = crawler;
             this.roomId = roomId;
@@ -49,25 +55,28 @@ namespace Zast.Player.CUI.Bilibili
             return allAddresses[_random.Next(0, allAddresses.Count - 1)].Url;
         }
 
-        private async Task<Stream> OpenLiveStream(CancellationToken token)
+        private async Task OpenLiveStream(PipeWriter writer, CancellationToken token)
         {
             var url = await GetLiveStreamAddress(token);
 
             var res = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
 
-            return await res.Content.ReadAsStreamAsync(token);
-
+            await res.Content.CopyToAsync(writer.AsStream(), token);
         }
-        private readonly Pipe _pipe = new Pipe();
         private readonly Stream _stream = new MemoryStream();
-        private async Task WriteWaveStream(Stream @out, CancellationToken token)
+        private async Task WriteWaveStream(PipeWriter writer, CancellationToken token)
         {
-            await FFMpegArguments
-                .FromPipeInput(new StreamPipeSource(await OpenLiveStream(token)))
-                .OutputToPipe(new StreamPipeSink(@out), opt => opt
+            var pipe = new Pipe();
+            AnsiConsole.MarkupLine($"[grey]系统[/] [red]准备启动ffmpeg[/]");
+            var copy = OpenLiveStream(pipe.Writer, token);
+            var ffmpeg = FFMpegArguments
+                .FromPipeInput(new StreamPipeSource(pipe.Reader.AsStream()))
+                .OutputToPipe(new StreamPipeSink(writer.AsStream()), opt => opt
                     .DisableChannel(Channel.Video)
-                    .WithCustomArgument("-osr 16000 -f wav"))
+                    .WithCustomArgument("-f wav"))
                 .ProcessAsynchronously();
+            await Task.WhenAny(copy, ffmpeg);
+            AnsiConsole.MarkupLine($"[grey]系统[/] [red]ffmpeg终止 token={token.IsCancellationRequested}[/]");
 
         }
         public async ValueTask Route(RequestContext ctx, Func<ValueTask> next)
@@ -77,10 +86,37 @@ namespace Zast.Player.CUI.Bilibili
 
             try
             {
-                var pipe = new Pipe();
-                _ = WriteWaveStream(pipe.Writer.AsStream(), ctx.CancelToken);
-                await pipe.Reader.AsStream().CopyToAsync(ctx.Http.Response.OutputStream, 8192, ctx.CancelToken);
+                while (!ctx.CancelToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        using var csc = CancellationTokenSource.CreateLinkedTokenSource(ctx.CancelToken);
+                        var token = csc.Token;
 
+                        var pipe = new Pipe();
+                        _ = WriteWaveStream(pipe.Writer, token)
+                            .ContinueWith((_) => csc.Cancel());
+
+                        var result = await pipe.Reader.ReadAsync(token);
+                        while (!token.IsCancellationRequested && !result.IsCanceled && !result.IsCompleted)
+                        {
+                            ReadOnlySequence<byte> buffer = result.Buffer;
+                            foreach (var item in result.Buffer)
+                            {
+                                await ctx.Http.Response.OutputStream.WriteAsync(item, token);
+                            }
+                            pipe.Reader.AdvanceTo(buffer.End);
+                            result = await pipe.Reader.ReadAsync(token);
+                        }
+                        AnsiConsole.MarkupLine($"[grey]系统[/] [red]直播流被意外中止，3秒后重启[/]");
+                        await Task.Delay(TimeSpan.FromSeconds(3));
+                    }
+                    catch (OperationCanceledException) {}
+                    catch (Exception e)
+                    {
+                        AnsiConsole.WriteException(e);
+                    }
+                }
             }
             finally
             {

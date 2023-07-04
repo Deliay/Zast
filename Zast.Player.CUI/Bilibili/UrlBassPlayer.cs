@@ -9,6 +9,8 @@ namespace Zast.Player.CUI.Bilibili
 {
     public class UrlBassPlayer : IDisposable
     {
+        public event Action<long>? LoadingProgressUpdated;
+
         private int streamIdx;
 
         public void Dispose()
@@ -22,7 +24,7 @@ namespace Zast.Player.CUI.Bilibili
         {
             cancellationToken.Register(() => Bass.Stop());
             Bass.Init();
-            this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, null);
+            this.streamIdx = Bass.CreateStream(url, 0, BassFlags.Default, (_, p, _) => LoadingProgressUpdated?.Invoke(p));
             Bass.ChannelPlay(this.streamIdx);
             return this;
         }

@@ -9,8 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
-using Zast.Player.CUI.Bilibili.Streaming;
-using Zast.Player.CUI.Bilibili.Streaming.AudioPlayer;
 using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Util;
 
@@ -104,7 +102,7 @@ namespace Zast.Player.CUI.Bilibili
                             damakuCount = 0;
                         }
                     }
-                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/]");
+                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/] | {_voiceCache}");
                 }
             });
         }
@@ -120,6 +118,8 @@ namespace Zast.Player.CUI.Bilibili
                 AnsiConsole.MarkupLine($"[grey]直播[/] [silver]{curr.Text.EscapeMarkup()}[/]");
             }
         }
+
+        private string _voiceCache = "";
 
         private async Task RunLiveStream(ScriptContext ctx, CancellationToken cancellationToken = default)
         {
@@ -140,6 +140,7 @@ namespace Zast.Player.CUI.Bilibili
             Task web = streamProxy.RunAsync(cancellationToken);
 
             using var bass = new UrlBassPlayer();
+            bass.LoadingProgressUpdated += (size) => _voiceCache = $" | {size / 1024}kb";
 
             bass.Play(RoomStreamStreamingProxy.WaveEndpoint, cancellationToken);
 
@@ -168,10 +169,12 @@ namespace Zast.Player.CUI.Bilibili
             try
             {
                 roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, cancellationToken);
-                await Task.WhenAll(
+                await Task.WhenAny(
                     RunDanmakuHandler(context, token),
                     RunLiveStream(context, token),
                     Quit(csc, token));
+                
+                csc.Cancel();
             }
             catch (Exception e)
             {
