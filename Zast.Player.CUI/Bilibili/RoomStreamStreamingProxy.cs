@@ -18,6 +18,7 @@ using System.IO.Pipes;
 using Spectre.Console;
 using System.Buffers;
 using System.Diagnostics;
+using Instances.Exceptions;
 
 namespace Zast.Player.CUI.Bilibili
 {
@@ -78,7 +79,7 @@ namespace Zast.Player.CUI.Bilibili
                 try
                 {
                     Stopwatch sw = new();
-                    AnsiConsole.MarkupLine($"[grey]系统[/] [lime]准备启动音频流[/]");
+                    AnsiConsole.MarkupLine($"[grey]ff[/] [lime]准备启动音频流[/]");
                     sw.Start();
                     await FFMpegArguments
                         .FromPipeInput(new StreamPipeSource(rawStream))
@@ -91,11 +92,16 @@ namespace Zast.Player.CUI.Bilibili
                         .NotifyOnError((progress) => AnsiConsole.MarkupLine($"[grey]ff[/] [red]{progress.EscapeMarkup()}[/]"))
                         .ProcessAsynchronously();
                     sw.Stop();
-                    AnsiConsole.MarkupLine($"[grey]系统[/] [red]音频流终止，持续 {sw.Elapsed.TotalSeconds}s[/]");
+                    AnsiConsole.MarkupLine($"[grey]ff[/] [red]音频流终止，持续 {sw.Elapsed.TotalSeconds}s[/]");
                 }
                 catch (ObjectDisposedException)
                 {
-                    AnsiConsole.MarkupLine($"[grey]系统[/] [red]B站直播流已经断开[/]");
+                    AnsiConsole.MarkupLine($"[grey]ff[/] [red]B站直播流已经断开[/]");
+                    break;
+                }
+                catch (InstanceFileNotFoundException)
+                {
+                    AnsiConsole.MarkupLine($"[grey]ff[/] [red]未找到ffmpeg，请将其安装到环境变量中[/]");
                     break;
                 }
                 catch (OperationCanceledException) {}
