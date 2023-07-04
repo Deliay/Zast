@@ -57,27 +57,47 @@ namespace Zast.Player.CUI.Bilibili
             return allAddresses[_random.Next(0, allAddresses.Count - 1)].Url;
         }
 
-        private async Task<Stream> OpenLiveStream(CancellationToken token)
+        private async Task OpenLiveStream(PipeWriter writer, CancellationToken token)
         {
             var url = await GetLiveStreamAddress(token);
-
             var res = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
-
-            var stream = await res.Content.ReadAsStreamAsync(token);
-
-            await Task.Delay(TimeSpan.FromSeconds(2), token);
-
-            return stream;
+            
+            await res.Content.CopyToAsync(writer.AsStream(), token);
         }
-        private readonly Stream _stream = new MemoryStream();
+
+        private async Task PeekLiveStream(PipeWriter writer, CancellationToken token)
+        {
+            var pipe = new Pipe();
+            _ = OpenLiveStream(pipe.Writer, token);
+
+            while (!token.IsCancellationRequested)
+            {
+                var result = await pipe.Reader.ReadAsync(token);
+                while (!token.IsCancellationRequested && !result.IsCanceled && !result.IsCompleted)
+                {
+                    ReadOnlySequence<byte> buffer = result.Buffer;
+                    Memory<byte> chunk = new byte[buffer.Length];
+                    
+                    foreach (var item in result.Buffer)
+                    {
+                        item.CopyTo(chunk);
+                    }
+                    await writer.WriteAsync(chunk, token);
+                    await writer.FlushAsync(token);
+                    pipe.Reader.AdvanceTo(buffer.End);
+                    result = await pipe.Reader.ReadAsync(token);
+                }
+            }
+        }
+
         private async Task WriteWaveStream(PipeWriter writer, CancellationToken token)
         {
             var pipe = new Pipe();
-            var rawStream = await OpenLiveStream(token);
+            _ = OpenLiveStream(pipe.Writer, token);
             var errorCount = 0;
             while (!token.IsCancellationRequested)
             {
-                if (++errorCount > 10)
+                if (++errorCount > 3)
                 {
                     AnsiConsole.MarkupLine("[grey]ff[/] [red]直播流重试次数过多，即将重新拉取新的直播流[/]");
                     return;
@@ -87,16 +107,15 @@ namespace Zast.Player.CUI.Bilibili
                     Stopwatch sw = new();
                     AnsiConsole.MarkupLine($"[grey]ff[/] [lime]准备启动音频流[/]");
                     sw.Start();
+
                     await FFMpegArguments
-                        .FromPipeInput(new StreamPipeSource(rawStream))
+                        .FromPipeInput(new StreamPipeSource(pipe.Reader.AsStream()), opt => opt
+                            .WithCustomArgument("-fflags +discardcorrupt"))
                         .OutputToPipe(new StreamPipeSink(writer.AsStream()), opt => opt
                             .DisableChannel(Channel.Video)
                             .WithCustomArgument("-f wav"))
-                        .WithLogLevel(FFMpegLogLevel.Error)
                         .CancellableThrough(token)
-                        .NotifyOnOutput((progress) => AnsiConsole.MarkupLine($"[grey]ff[/] {progress.EscapeMarkup()}"))
-                        .NotifyOnError((progress) => AnsiConsole.MarkupLine($"[grey]ff[/] [red]{progress.EscapeMarkup()}[/]"))
-                        .ProcessAsynchronously();
+                        .ProcessAsynchronously(true, new() { Encoding = Encoding.UTF8 });
                     sw.Stop();
                     AnsiConsole.MarkupLine($"[grey]ff[/] [red]音频流终止，持续 {sw.Elapsed.TotalSeconds}s[/]");
                 }
@@ -181,7 +200,6 @@ namespace Zast.Player.CUI.Bilibili
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            using var __Stream = _stream;
             using var _host = host;
         }
     }
