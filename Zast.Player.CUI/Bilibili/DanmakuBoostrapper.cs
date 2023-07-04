@@ -102,7 +102,7 @@ namespace Zast.Player.CUI.Bilibili
                             damakuCount = 0;
                         }
                     }
-                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/] | {_voiceCache}");
+                    ctx.Status($"弹幕 [purple]{damakuSpeed}[/]条/分 ({damakuCount}) | 在线 [green]{online}[/] 人 | [grey]{lastEnter} 进入直播间[/]{_voiceCache}");
                 }
             });
         }

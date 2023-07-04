@@ -17,6 +17,7 @@ using System.IO.Pipelines;
 using System.IO.Pipes;
 using Spectre.Console;
 using System.Buffers;
+using System.Diagnostics;
 
 namespace Zast.Player.CUI.Bilibili
 {
@@ -55,28 +56,46 @@ namespace Zast.Player.CUI.Bilibili
             return allAddresses[_random.Next(0, allAddresses.Count - 1)].Url;
         }
 
-        private async Task OpenLiveStream(PipeWriter writer, CancellationToken token)
+        private async Task<Stream> OpenLiveStream(CancellationToken token)
         {
             var url = await GetLiveStreamAddress(token);
 
             var res = await HttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
 
-            await res.Content.CopyToAsync(writer.AsStream(), token);
+            return await res.Content.ReadAsStreamAsync(token);
         }
         private readonly Stream _stream = new MemoryStream();
         private async Task WriteWaveStream(PipeWriter writer, CancellationToken token)
         {
             var pipe = new Pipe();
-            AnsiConsole.MarkupLine($"[grey]系统[/] [red]准备启动ffmpeg[/]");
-            var copy = OpenLiveStream(pipe.Writer, token);
-            var ffmpeg = FFMpegArguments
-                .FromPipeInput(new StreamPipeSource(pipe.Reader.AsStream()))
-                .OutputToPipe(new StreamPipeSink(writer.AsStream()), opt => opt
-                    .DisableChannel(Channel.Video)
-                    .WithCustomArgument("-f wav"))
-                .ProcessAsynchronously();
-            await Task.WhenAny(copy, ffmpeg);
-            AnsiConsole.MarkupLine($"[grey]系统[/] [red]ffmpeg终止 token={token.IsCancellationRequested}[/]");
+            var rawStream = await OpenLiveStream(token);
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    Stopwatch sw = new();
+                    AnsiConsole.MarkupLine($"[grey]系统[/] [lime]准备启动音频流[/]");
+                    sw.Start();
+                    await FFMpegArguments
+                        .FromPipeInput(new StreamPipeSource(rawStream))
+                        .OutputToPipe(new StreamPipeSink(writer.AsStream()), opt => opt
+                            .DisableChannel(Channel.Video)
+                            .WithCustomArgument("-f wav"))
+                        .ProcessAsynchronously();
+                    sw.Stop();
+                    AnsiConsole.MarkupLine($"[grey]系统[/] [red]音频流终止，持续 {sw.Elapsed.TotalSeconds}s[/]");
+                }
+                catch (ObjectDisposedException)
+                {
+                    AnsiConsole.MarkupLine($"[grey]系统[/] [red]B站直播流已经断开[/]");
+                    break;
+                }
+                catch (OperationCanceledException) {}
+                catch (Exception e)
+                {
+                    AnsiConsole.WriteException(e);
+                }
+            }
 
         }
         public async ValueTask Route(RequestContext ctx, Func<ValueTask> next)
