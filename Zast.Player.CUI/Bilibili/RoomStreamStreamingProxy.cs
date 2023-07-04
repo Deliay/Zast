@@ -74,8 +74,14 @@ namespace Zast.Player.CUI.Bilibili
         {
             var pipe = new Pipe();
             var rawStream = await OpenLiveStream(token);
+            var errorCount = 0;
             while (!token.IsCancellationRequested)
             {
+                if (++errorCount > 10)
+                {
+                    AnsiConsole.MarkupLine("[grey]ff[/] [red]直播流重试次数过多，即将重新拉取新的直播流[/]");
+                    return;
+                }
                 try
                 {
                     Stopwatch sw = new();
@@ -108,10 +114,6 @@ namespace Zast.Player.CUI.Bilibili
                 catch (Exception e)
                 {
                     AnsiConsole.WriteException(e);
-                }
-                finally
-                {
-                    
                 }
             }
 
