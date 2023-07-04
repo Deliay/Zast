@@ -10,7 +10,7 @@ namespace Zast.Player.CUI.Scripts
     {
         private readonly ScriptContext context;
 
-        public IScript CurrentScript { get; private set; }
+        public IScript? CurrentScript { get; private set; }
 
         public ScriptManager()
         {

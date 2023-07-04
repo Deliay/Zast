@@ -14,9 +14,9 @@ namespace Zast.Player.CUI.Bilibili.Streaming.AudioPlayer
             //Bass.Init();
         }
 
-        public static async Task Play(Stream @in, CancellationToken cancellationToken)
+        public static Task Play(Stream @in, CancellationToken cancellationToken)
         {
-
+            return Task.CompletedTask;
         }
     }
 }
