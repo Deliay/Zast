@@ -69,7 +69,7 @@ namespace Zast.Player.CUI.Bilibili
 
         private async Task BottomPanel(ScriptContext context, CancellationToken cancellationToken)
         {
-
+            await StatusPanel(context, cancellationToken);
         }
 
         private async Task Danmaku(ScriptContext context, CancellationToken cancellationToken)
