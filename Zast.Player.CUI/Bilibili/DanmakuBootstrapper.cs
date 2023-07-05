@@ -57,7 +57,7 @@ namespace Zast.Player.CUI.Bilibili
 
         private async Task StatusPanel(ScriptContext context, CancellationToken cancellationToken)
         {
-            await AnsiConsole.Status().Start("连接中...", async (ctx) =>
+            await AnsiConsole.Status().StartAsync("连接中...", async (ctx) =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -129,10 +129,12 @@ namespace Zast.Player.CUI.Bilibili
 
             await PrintLiveStatus(info.RoomId, cancellationToken);
 
-            await Task.WhenAll(
-                Danmaku(context, cancellationToken),
-                BottomPanel(context, cancellationToken)
-            );
+            List<Task> tasks = new()
+                {
+                    Danmaku(context, cancellationToken),
+                    BottomPanel(context, cancellationToken)
+                };
+            await Task.WhenAll(tasks);
         }
 
         private async Task RunWhisper(StatusContext ctx, CancellationToken cancellationToken = default)
@@ -197,15 +199,15 @@ namespace Zast.Player.CUI.Bilibili
             try
             {
                 roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, token);
+                Task voice = RunLiveStream(context, token);
                 List<Task> taskGroup = new()
                 {
                     RunDanmakuHandler(context, token),
-                    RunLiveStream(context, token),
-                    Quit(csc, token)
+                    Quit(csc, token),
                 };
                 await Task.WhenAny(taskGroup);
                 csc.Cancel();
-                await Task.WhenAll(taskGroup);
+                await Task.WhenAll(taskGroup.Concat(Enumerable.Repeat(voice, 1)));
             }
             catch (Exception e)
             {
