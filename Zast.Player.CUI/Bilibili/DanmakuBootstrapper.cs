@@ -67,9 +67,21 @@ namespace Zast.Player.CUI.Bilibili
             });
         }
 
+        private static async Task Quit(CancellationTokenSource csc, CancellationToken cancellationToken)
+        {
+            while (Console.ReadKey().Key != ConsoleKey.Escape)
+            {
+                if (cancellationToken.IsCancellationRequested) { break; }
+                await Task.Delay(1, cancellationToken);
+            }
+            csc.Cancel();
+        }
+
         private async Task BottomPanel(ScriptContext context, CancellationToken cancellationToken)
         {
-            await StatusPanel(context, cancellationToken);
+            using var csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task currentTask = StatusPanel(context, csc.Token);
+            
         }
 
         private async Task Danmaku(ScriptContext context, CancellationToken cancellationToken)
@@ -179,16 +191,6 @@ namespace Zast.Player.CUI.Bilibili
             await tcs.Task;
         }
 
-        private static async Task Quit(CancellationTokenSource csc, CancellationToken cancellationToken)
-        {
-            while (Console.ReadKey().Key != ConsoleKey.Escape)
-            {
-                if (cancellationToken.IsCancellationRequested) { break; }
-                await Task.Delay(1, cancellationToken);
-            }
-            csc.Cancel();
-        }
-
         private LiveRoomInfo roomInfo;
 
         public async ValueTask RunAsync(ScriptContext context, CancellationToken cancellationToken = default)
@@ -203,7 +205,7 @@ namespace Zast.Player.CUI.Bilibili
                 List<Task> taskGroup = new()
                 {
                     RunDanmakuHandler(context, token),
-                    Quit(csc, token),
+                    BottomPanel(context, token),
                 };
                 await Task.WhenAny(taskGroup);
                 csc.Cancel();
