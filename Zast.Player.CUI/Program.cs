@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Mikibot.Crawler.Http.Bilibili;
-using Spectre.Console;
 using Zast.Player.CUI;
 using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Scripts.Scenes;
