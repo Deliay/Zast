@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zast.Player.CUI.Util
+namespace Zast.BuildingBlocks.Util
 {
     public static class MultiInterfaceImplmenetRegistrationHelper
     {

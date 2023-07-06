@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Zast.Player.CUI.Util
+namespace Zast.BuildingBlocks.Util
 {
     public static class JsonRepository
     {

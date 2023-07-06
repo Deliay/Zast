@@ -1,3 +1,4 @@
+using Zast.BuildingBlocks.Util;
 using Zast.Player.CUI.Util;
 
 namespace Zast.Player.CUI.Bilibili

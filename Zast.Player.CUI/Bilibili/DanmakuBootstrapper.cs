@@ -12,6 +12,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Whisper.net;
+using Zast.BuildingBlocks.Scripts;
 using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Util;
 

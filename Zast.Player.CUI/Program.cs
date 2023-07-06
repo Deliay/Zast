@@ -5,6 +5,8 @@ using Zast.Player.CUI.Scripts;
 using Zast.Player.CUI.Scripts.Scenes;
 using Zast.Player.CUI.Util;
 using Zast.Player.CUI.Bilibili;
+using Zast.BuildingBlocks.Scripts;
+using Zast.BuildingBlocks.Util;
 
 IServiceCollection builder = new ServiceCollection();
 

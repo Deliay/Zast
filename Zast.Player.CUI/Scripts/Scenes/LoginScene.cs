@@ -1,5 +1,6 @@
 using Mikibot.Crawler.Http.Bilibili;
 using Spectre.Console;
+using Zast.BuildingBlocks.Scripts;
 using Zast.Player.CUI.Bilibili;
 using Zast.Player.CUI.Scripts;
 

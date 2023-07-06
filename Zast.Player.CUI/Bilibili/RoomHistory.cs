@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Zast.BuildingBlocks.Util;
 using Zast.Player.CUI.Util;
 
 namespace Zast.Player.CUI.Bilibili

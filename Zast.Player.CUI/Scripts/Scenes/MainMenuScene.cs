@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Zast.BuildingBlocks.Scripts;
 using Zast.Player.CUI.Bilibili;
 
 namespace Zast.Player.CUI.Scripts.Scenes

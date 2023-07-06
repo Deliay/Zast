@@ -1,4 +1,5 @@
 using Spectre.Console;
+using Zast.BuildingBlocks.Scripts;
 
 namespace Zast.Player.CUI.Scripts.Scenes
 {
