@@ -80,8 +80,13 @@ namespace Zast.Player.CUI.Bilibili
         private async Task BottomPanel(ScriptContext context, CancellationToken cancellationToken)
         {
             using var csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            Task currentTask = StatusPanel(context, csc.Token);
+            Task defaultTask = StatusPanel(context, csc.Token);
             
+            while (Console.ReadKey().Key != ConsoleKey.Escape)
+            {
+                if (csc.IsCancellationRequested) { break; }
+                await Task.Delay(1, cancellationToken);
+            }
         }
 
         private async Task Danmaku(ScriptContext context, CancellationToken cancellationToken)
@@ -205,7 +210,8 @@ namespace Zast.Player.CUI.Bilibili
                 List<Task> taskGroup = new()
                 {
                     RunDanmakuHandler(context, token),
-                    BottomPanel(context, token),
+                    BottomPanel(context, token)
+                    .ContinueWith((_) => csc.Cancel(), token),
                 };
                 await Task.WhenAny(taskGroup);
                 csc.Cancel();
