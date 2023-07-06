@@ -23,8 +23,17 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
         public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
         {
+            var roomIds = await RoomHistory.GetHistory(cancellationToken);
+
+            if (roomIds.Count == 0) 
+            {
+                AnsiConsole.MarkupLine($"[yellow]暂无历史[/]，3秒后返回");
+                await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
+                return prev;
+            }
+
             var roomId = AnsiConsole.Prompt(new SelectionPrompt<int>()
-                .AddChoices(await RoomHistory.GetHistory(cancellationToken))
+                .AddChoices(roomIds)
                 .Title("选择要进入的房间："));
 
 
