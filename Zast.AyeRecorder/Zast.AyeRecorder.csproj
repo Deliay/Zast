@@ -16,5 +16,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Mikibot.Crawler\Mikibot.Crawler.csproj" />
+    <ProjectReference Include="..\Zast.BuildingBlocks\Zast.BuildingBlocks.csproj" />
   </ItemGroup>
 </Project>

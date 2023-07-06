@@ -23,6 +23,16 @@ namespace Zast.BuildingBlocks.Scripts
             return res;
         }
 
+        public T Get<T>()
+        {
+            if (TryGet<T>(out var value))
+            {
+                return value;
+            }
+
+            throw new InvalidOperationException();
+        }
+
         public void Set<T>(T value)
         {
             context.Remove(typeof(T));
