@@ -10,7 +10,7 @@ public class RecordConfig
 
     public string RecordFileNameFormat { get; set; }
 
-    public List<long> RoomIds { get; set; }
+    public HashSet<long> RoomIds { get; set; }
 
     public static RecordConfig Default() => new()
     {

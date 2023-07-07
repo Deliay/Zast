@@ -66,7 +66,7 @@ namespace Zast.AyeRecorder.Recording
             int bitrate = config.Quality;
             var (protocol, format, codec) = ModeArgs(config.Mode);
 
-            var stream = addresses.PlayUrlInfo.PlayUrl.Streams
+            var streams = addresses.PlayUrlInfo.PlayUrl.Streams
                 .SelectMany(s => s.Formats.SelectMany(f => f.Codec.Select(c => new Stream()
                 {
                     Codec = c.CodecName,
@@ -75,7 +75,16 @@ namespace Zast.AyeRecorder.Recording
                     Bitrate = c.Quality,
                     Url = $"{c.UrlInfos.First().Host}{c.BaesUrl}{c.UrlInfos.First().Extra}",
                 })))
-                .Order(this)
+                .Order(this).ToList();
+
+            foreach (var item in streams)
+            {
+                logger.LogInformation($"可用录制源 {item.Protocol} {item.Format} in {item.Codec} 画质 {item.Bitrate} ({BitrateConfig.Convert(item.Bitrate)}) ");
+            }
+
+            logger.LogInformation($"码率偏好 {bitrate} {protocol} | {format} | {codec}");
+
+            var stream = streams
                 .GroupBy(s => s.Bitrate)
                 .MaxBy(s => Math.Abs(s.Key - bitrate) * -1)
                 ?.Order(this)
@@ -114,9 +123,9 @@ namespace Zast.AyeRecorder.Recording
             {
                 try
                 {
-                    var info = await crawler.GetLiveStreamAddressV2(roomId);
+                    var info = await crawler.GetLiveStreamAddressV2(roomId, cancellationToken);
                     var config = await configRepository.Load(cancellationToken) ?? RecordConfig.Default();
-                    if (info.LiveStatus == 0)
+                    if (info.LiveStatus == 0 || info.PlayUrlInfo is null)
                     {
                         continue;
                     }
@@ -138,10 +147,10 @@ namespace Zast.AyeRecorder.Recording
                         path = Path.Combine(Environment.CurrentDirectory, $"{roomId}", $"{fileName}_{index}.flv");
                     }
 
-                    logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Format} 码率 {liveStream.Bitrate} 目标文件 {path}");
-
+                    logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Protocol} - {liveStream.Codec} {liveStream.Format} 码率 {liveStream.Bitrate} 目标文件 {path}");
 
                     Pipe pipe = new();
+
                     using var output = pipe.Writer.AsStream();
                     Task ffmpegTask = FFMpegArguments
                         .FromUrlInput(new Uri(liveStream.Url))
@@ -202,10 +211,10 @@ namespace Zast.AyeRecorder.Recording
 
         int IComparer<Stream>.Compare(Stream x, Stream y)
         {
-            if (x.Bitrate > y.Bitrate) return 1;
-            if (x.Protocol == "http_stream") return 1;
-            if (x.Codec == "hevc") return 1;
-            if (x.Format == "ts") return 1;
+            if (x.Bitrate > y.Bitrate) return 6;
+            else if (x.Protocol == "http_stream") return 5;
+            else if (x.Codec == "hevc") return 2;
+            else if (x.Format == "ts") return 1;
 
             return -1;
         }

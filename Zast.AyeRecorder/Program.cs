@@ -42,6 +42,9 @@ builder.AddAllSingleton<BitrateConfig, IMenuItem>();
 builder.AddAllSingleton<PreferModeConfig, IMenuItem>();
 builder.AddAllSingleton<ExitConfig, IMenuItem>();
 
+builder.AddSingleton<AddRoomScript>();
+builder.AddSingleton<RemoveRoomScript>();
+
 builder.AddSingleton<RecordingScript>();
 builder.AddTransient<RecordingMan>();
 builder.AddSingleton<BiliLiveCrawler>();
@@ -55,6 +58,8 @@ var scripts = services.GetRequiredService<ScriptManager>();
 IScript script = arg switch
 {
     "config" => services.GetRequiredService<ConfigScript>(),
+    "add" => services.GetRequiredService<AddRoomScript>(),
+    "remove" => services.GetRequiredService<RemoveRoomScript>(),
     _ => services.GetRequiredService<RecordingScript>(),
 };
 

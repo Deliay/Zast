@@ -15,7 +15,7 @@ namespace Zast.AyeRecorder.Recording
 
         public static async ValueTask<bool> IsRunning(CancellationToken cancellationToken)
         {
-            if (!File.Exists("LockFile"))
+            if (!File.Exists(LockFile))
             {
                 return false;
             }
@@ -24,8 +24,14 @@ namespace Zast.AyeRecorder.Recording
             {
                 return false;
             }
-
-            return Process.GetProcessById(pid) is not null;
+            try
+            {
+                return Process.GetProcessById(pid) is not null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static async ValueTask<bool> Lock(CancellationToken cancellationToken)
