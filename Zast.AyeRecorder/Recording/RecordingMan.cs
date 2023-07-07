@@ -8,9 +8,11 @@ using Mikibot.Crawler.Http.Bilibili.Model;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Zast.AyeRecorder.Config;
 using Zast.AyeRecorder.Script.Config;
@@ -20,6 +22,7 @@ namespace Zast.AyeRecorder.Recording
     public class RecordingMan : IDisposable, IComparer<RecordingMan.Stream>
     {
         private readonly BiliLiveCrawler crawler;
+        private readonly BiliLiveStreamCrawler streamCrawler;
         private readonly ILogger<RecordingMan> logger;
         private readonly RecordConfigRepository configRepository;
         private IDisposable? loggerScope;
@@ -29,11 +32,13 @@ namespace Zast.AyeRecorder.Recording
 
         public RecordingMan(
             BiliLiveCrawler crawler,
+            BiliLiveStreamCrawler streamCrawler,
             ILogger<RecordingMan> logger,
             RecordConfigRepository configRepository
             )
         {
             this.crawler = crawler;
+            this.streamCrawler = streamCrawler;
             this.logger = logger;
             this.configRepository = configRepository;
             this.cts = new CancellationTokenSource();
@@ -75,7 +80,8 @@ namespace Zast.AyeRecorder.Recording
                     Bitrate = c.Quality,
                     Url = $"{c.UrlInfos.First().Host}{c.BaesUrl}{c.UrlInfos.First().Extra}",
                 })))
-                .Order(this).ToList();
+                .Where(s => s.Codec != "hevc")
+                .OrderDescending(this).ToList();
 
             foreach (var item in streams)
             {
@@ -87,7 +93,7 @@ namespace Zast.AyeRecorder.Recording
             var stream = streams
                 .GroupBy(s => s.Bitrate)
                 .MaxBy(s => Math.Abs(s.Key - bitrate) * -1)
-                ?.Order(this)
+                ?.OrderDescending(this)
                 ?.FirstOrDefault();
 
             return stream ?? throw new InvalidDataException();
@@ -114,6 +120,57 @@ namespace Zast.AyeRecorder.Recording
             {
                 logger.LogError(e, $"文件名格式 {config.RecordFileNameFormat} 无法渲染");
                 return $"{roomId}-{variable.recordingAt:yyyyMMdd-HHmmss-fff}-{variable.title}-{variable.quality}";
+            }
+        }
+
+        private Task FFmpegRecording(Stream stream, PipeWriter writer, CancellationToken cancellationToken)
+        {
+            logger.LogInformation("使用 ffmpeg 进行输出");
+            var output = writer.AsStream();
+            return FFMpegArguments
+                .FromUrlInput(new Uri(stream.Url))
+                .OutputToPipe(new StreamPipeSink(output), opt => opt.CopyChannel(Channel.All).ForceFormat("flv"))
+                .CancellableThrough(cancellationToken)
+                .ProcessAsynchronously(true);
+        }
+
+        private Task DirectRecording(Stream stream, PipeWriter writer, CancellationToken cancellationToken)
+        {
+            logger.LogInformation("使用 B站flv 进行输出");
+            var @out = writer.AsStream();
+            return streamCrawler.OpenLiveStream(stream.Url, @out, cancellationToken);
+        }
+
+        private Task Recording(Stream stream, PipeWriter writer, CancellationToken cancellationToken)
+        {
+            return stream.Protocol switch
+            {
+                "http_stream" => DirectRecording(stream, writer, cancellationToken),
+                _ => FFmpegRecording(stream, writer, cancellationToken),
+            };
+        }
+
+        private async Task WriteFile(string path, PipeReader reader, CancellationToken cancellationToken)
+        {
+            using var fs = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            logger.LogInformation($"输出文件 {path}");
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var result = await reader.ReadAtLeastAsync(1, cancellationToken);
+                if (result.IsCompleted)
+                {
+                    continue;
+                }
+                while (!cancellationToken.IsCancellationRequested && !result.IsCanceled && !result.IsCompleted)
+                {
+                    ReadOnlySequence<byte> buffer = result.Buffer;
+                    foreach (var item in result.Buffer)
+                    {
+                        await fs.WriteAsync(item, cancellationToken);
+                    }
+                    reader.AdvanceTo(buffer.End);
+                    result = await reader.ReadAsync(cancellationToken);
+                }
             }
         }
 
@@ -147,38 +204,15 @@ namespace Zast.AyeRecorder.Recording
                         path = Path.Combine(Environment.CurrentDirectory, $"{roomId}", $"{fileName}_{index}.flv");
                     }
 
-                    logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Protocol} - {liveStream.Codec} {liveStream.Format} 码率 {liveStream.Bitrate} 目标文件 {path}");
+                    logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Protocol} - {liveStream.Codec} {liveStream.Format} 码率 {liveStream.Bitrate}");
 
                     Pipe pipe = new();
 
-                    using var output = pipe.Writer.AsStream();
-                    Task ffmpegTask = FFMpegArguments
-                        .FromUrlInput(new Uri(liveStream.Url))
-                        .OutputToPipe(new StreamPipeSink(output), opt => opt.CopyChannel(Channel.All).ForceFormat("flv"))
-                        .CancellableThrough(cancellationToken)
-                        .ProcessAsynchronously(true);
+                    Task recordingTask = Recording(liveStream, pipe.Writer, cancellationToken);
 
+                    Task fileWriteTask = WriteFile(path, pipe.Reader, cancellationToken);
 
-                    Task fileWriteTask = Task.Run(async () =>
-                    {
-                        using var fs = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-                        while (!cancellationToken.IsCancellationRequested)
-                        {
-                            var result = await pipe.Reader.ReadAsync(cancellationToken);
-                            while (!cancellationToken.IsCancellationRequested && !result.IsCanceled && !result.IsCompleted)
-                            {
-                                ReadOnlySequence<byte> buffer = result.Buffer;
-                                foreach (var item in result.Buffer)
-                                {
-                                    await fs.WriteAsync(item, cancellationToken);
-                                }
-                                pipe.Reader.AdvanceTo(buffer.End);
-                                result = await pipe.Reader.ReadAsync(cancellationToken);
-                            }
-                        }
-                    }, cancellationToken);
-
-                    await Task.WhenAny(ffmpegTask, fileWriteTask);
+                    await Task.WhenAny(recordingTask, fileWriteTask);
                 }
                 catch (Exception e)
                 {
@@ -211,10 +245,15 @@ namespace Zast.AyeRecorder.Recording
 
         int IComparer<Stream>.Compare(Stream x, Stream y)
         {
-            if (x.Bitrate > y.Bitrate) return 6;
-            else if (x.Protocol == "http_stream") return 5;
-            else if (x.Codec == "hevc") return 2;
-            else if (x.Format == "ts") return 1;
+            if (x.Bitrate > y.Bitrate) return 1;
+            else if (x.Protocol == "http_stream") return -1;
+            else if (y.Protocol != "http_stream") return 1;
+            if (x.Codec == "avc") return 1;
+            else if (y.Codec == "avc") return -1;
+            if (x.Codec == "hevc") return 1;
+            else if (y.Codec == "hevc") return -1;
+            if (x.Format == "ts") return 1;
+            else if (x.Format == "ts") return -1;
 
             return -1;
         }

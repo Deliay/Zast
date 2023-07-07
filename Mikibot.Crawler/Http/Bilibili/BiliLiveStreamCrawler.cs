@@ -21,5 +21,11 @@ namespace Mikibot.Crawler.Http.Bilibili
             var res = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             return await res.Content.ReadAsStreamAsync(cancellationToken);
         }
+
+        public async Task OpenLiveStream(string url, Stream @out, CancellationToken cancellationToken)
+        {
+            var res = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            await res.Content.CopyToAsync(@out, cancellationToken);
+        }
     }
 }
