@@ -59,12 +59,12 @@ namespace Zast.AyeRecorder.Scripts
             {
                 if (!recordingInstance.ContainsKey(roomId))
                 {
-                    logger.LogInformation($"正在启动房间 {roomId}");
+                    logger.LogInformation($"正在启用房间监听 {roomId}");
 
                     var man = serviceProvider.GetRequiredService<RecordingMan>();
                     await man.Initialize(roomId);
 
-                    logger.LogInformation($"{roomId} 启动成功");
+                    logger.LogInformation($"{roomId} 监听启动成功");
 
                     recordingInstance.Add(roomId, man);
                 }
