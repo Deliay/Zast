@@ -27,7 +27,7 @@ public class BitrateConfig : IMenuItem
     {
         AnsiConsole.MarkupLine("[yellow]选择优先录制码率，如果无法录制选择的码率，则按B站返回的推荐码率录制。[/]");
         var qn = AnsiConsole.Prompt(new SelectionPrompt<int>()
-            .AddChoices(80, 150, 250, 400, 10000, 20000, 30000)
+            .AddChoices(10000, 80, 150, 250, 400, 20000, 30000)
             .UseConverter(Convert));
 
         return ValueTask.FromResult(prev);

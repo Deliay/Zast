@@ -90,6 +90,15 @@ namespace Mikibot.Crawler.Http.Bilibili
             return result.Data.Urls;
         }
 
+        public async ValueTask<LiveStreamAddressesV2> GetLiveStreamAddressV2(long roomid, CancellationToken token = default)
+        {
+            var url = $"https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id={roomid}&protocol=0,1&format=0,1,2&codec=0,1&qn=30000&platform=web&ptype=8&dolby=5&panorama=1";
+            var result = await GetAsync<BilibiliApiResponse<LiveStreamAddressesV2>>(url, token);
+            result.AssertCode();
+
+            return result.Data;
+        }
+
         private static readonly Dictionary<long, LiveInitInfo> roomIdMappingCache = new();
         public async ValueTask<GuardInfo> GetRoomGuardList(long roomId, int page = 1, CancellationToken token = default)
         {

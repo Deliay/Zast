@@ -18,9 +18,22 @@
 ##### FFmpeg
 程序会将B站的`m3u8`编码为`flv`，需要ffmpeg支持。访问[这里](https://ffmpeg.org/download.html)安装。
 
-
 ### 配置
-首次运行会询问首选的录制格式、码率、录制位置等，按照CLI指引设置即可。也可以在配置文件中`setting.json`中修改相应的配置。
+首次运行会询问首选的录制格式、码率，按照CLI指引设置即可。也可以在配置文件中`setting.json`中修改相应的配置。
+
+#### 存储路径
+没有特殊配置则存储到`Working Directory`下，每一个直播间独立为一个文件夹
+- 默认文件夹名称`{房间号}-{用户名}`
+- 默认文件名为`{房间号}-{开始时间}-{标题}-{画质}.flv`。
+
+#### 可用变量
+- 房间号
+- 用户名称
+- 开始时间
+- 当场直播开始时间
+- 标题
+- 录制画质
+编写格式参照 [dotliquid](https://github.com/dotliquid/dotliquid)。
 
 ### 使用指令
 - `Zast.AyeRecorder` 无参数运行，按照配置开始录制
@@ -28,7 +41,8 @@
 - `Zast.AyeRecorder add [room]` 增加需要录制的直播间
 - `Zast.AyeRecorder remove [room]` 停止录制对应直播间
 
-###
+## 杂项
+初看B站的API，貌似支持杜比和HDR流，这个之后广泛应用了再考虑抓取吧。感觉能推这种流的场景，流本身一般也是加密的。**能付费还是要付费的呀**。
 
 ## 依赖
 - 基本运行时 [.net 7](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)
