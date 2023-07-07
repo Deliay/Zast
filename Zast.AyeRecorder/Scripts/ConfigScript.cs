@@ -25,11 +25,7 @@ public class ConfigScript : IScript
     {
         if (!context.TryGet<RecordConfig>(out var setting))
         {
-            context.Set(await configRepository.Load(cancellationToken) ?? new RecordConfig
-            {
-                Quality = 10000,
-                Mode = Mode.m3u8_hls_ts_h264,
-            });
+            context.Set(await configRepository.Load(cancellationToken) ?? RecordConfig.Default());
         }
         else
         {

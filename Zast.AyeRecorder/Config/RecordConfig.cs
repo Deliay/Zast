@@ -15,4 +15,10 @@ public class RecordConfig
     public string RecordFileNameFormat { get; set; }
 
     public List<long> RoomIds { get; set; }
+
+    public static RecordConfig Default() => new()
+    {
+        Quality = 10000,
+        Mode = Mode.m3u8_hls_ts_h264,
+    };
 }
