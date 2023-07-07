@@ -21,22 +21,24 @@ using var csc = new CancellationTokenSource();
 var logger = services.GetRequiredService<ILogger<Program>>();
 var crawler = services.GetRequiredService<BiliLiveCrawler>();
 var wsClient = services.GetRequiredService<WebsocketClient>();
+var roomId = 1306;
 
-var roomId = 11306;
+var playAddr = await crawler.GetLiveStreamAddressV2(roomId, csc.Token);
+
 var personal = await crawler.GetLiveRoomInfo(roomId, csc.Token);
 var realRoomId = await crawler.GetRealRoomId(roomId, csc.Token);
 var spectatorEndpoint = await crawler.GetLiveToken(realRoomId, csc.Token);
 var spectatorHost = spectatorEndpoint.Hosts[0];
 
 var allGuards = new HashSet<GuardUserInfo>();
-var init = await crawler.GetRoomGuardList(11306, token: csc.Token);
+var init = await crawler.GetRoomGuardList(roomId, token: csc.Token);
 allGuards.UnionWith(init.List);
 allGuards.UnionWith(init.Top3);
 while (init.List.Count > 0
     && init.Info.Count > allGuards.Count
     && init.Info.PageCount > init.Info.Current)
 {
-    init = await crawler.GetRoomGuardList(11306, init.Info.Current + 1, csc.Token);
+    init = await crawler.GetRoomGuardList(roomId, init.Info.Current + 1, csc.Token);
     allGuards.UnionWith(init.List);
 }
 var count = allGuards.Where(n => n.Online != 0).Count();
