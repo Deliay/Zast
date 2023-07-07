@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Mikibot.Crawler.Http.Bilibili;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
-using Spectre.Console.Cli;
 using Zast.AyeRecorder.Config;
 using Zast.AyeRecorder.Recording;
 using Zast.AyeRecorder.Script;

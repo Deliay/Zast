@@ -1,9 +1,14 @@
-﻿using FFMpegCore;
+﻿using DotLiquid;
+using FFMpegCore;
+using FFMpegCore.Enums;
+using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
 using Mikibot.Crawler.Http.Bilibili;
 using Mikibot.Crawler.Http.Bilibili.Model;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +23,7 @@ namespace Zast.AyeRecorder.Recording
         private readonly ILogger<RecordingMan> logger;
         private readonly RecordConfigRepository configRepository;
         private IDisposable? loggerScope;
-        private readonly CancellationTokenSource csc;
+        private readonly CancellationTokenSource cts;
         private long roomId;
         private LiveRoomInfo info;
 
@@ -31,7 +36,7 @@ namespace Zast.AyeRecorder.Recording
             this.crawler = crawler;
             this.logger = logger;
             this.configRepository = configRepository;
-            this.csc = new CancellationTokenSource();
+            this.cts = new CancellationTokenSource();
         }
 
         public (string, string, string) ModeArgs(Mode mode)
@@ -56,12 +61,12 @@ namespace Zast.AyeRecorder.Recording
             public int Bitrate { get; set; }
         }
 
-        private string PickAddress(RecordConfig config, LiveStreamAddressesV2 addresses)
+        private Stream PickStream(RecordConfig config, LiveStreamAddressesV2 addresses)
         {
             int bitrate = config.Quality;
             var (protocol, format, codec) = ModeArgs(config.Mode);
 
-            var sortedStreams = addresses.PlayUrlInfo.PlayUrl.Streams
+            var stream = addresses.PlayUrlInfo.PlayUrl.Streams
                 .SelectMany(s => s.Formats.SelectMany(f => f.Codec.Select(c => new Stream()
                 {
                     Codec = c.CodecName,
@@ -70,43 +75,129 @@ namespace Zast.AyeRecorder.Recording
                     Bitrate = c.Quality,
                     Url = $"{c.UrlInfos.First().Host}{c.BaesUrl}{c.UrlInfos.First().Extra}",
                 })))
-                .Order(this).ToList();
+                .Order(this)
+                .GroupBy(s => s.Bitrate)
+                .MaxBy(s => Math.Abs(s.Key - bitrate) * -1)
+                ?.Order(this)
+                ?.FirstOrDefault();
 
-            var nearlyStreamGroup = sortedStreams.GroupBy(s => s.Bitrate)
-                .Max(s => Math.Abs(s.Key - bitrate) * -1);
+            return stream ?? throw new InvalidDataException();
         }
 
-        private async Task LoopingRecording()
+        private async ValueTask<string> GetFileName(RecordConfig config, Stream stream)
         {
-            while (!csc.IsCancellationRequested)
+            var roomInfo = await crawler.GetLiveRoomInfo(roomId, cts.Token);
+
+            var variable = new
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), csc.Token);
-                var info = await crawler.GetLiveStreamAddressV2(roomId);
-                var config = await configRepository.Load(csc.Token);
-                if (info.LiveStatus == 0)
+                roomId,
+                recordingAt = $"{DateTime.Now:yyyyMMdd-HHmmss-fff}",
+                title = roomInfo.Title,
+                quality = BitrateConfig.Convert(stream.Bitrate),
+            };
+
+            try
+            {
+                Template template = Template.Parse(config.RecordFileNameFormat ?? RecordConfig.Default().RecordFileNameFormat);
+                return template.Render(Hash.FromAnonymousObject(variable));
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"文件名格式 {config.RecordFileNameFormat} 无法渲染");
+                return $"{roomId}-{variable.recordingAt:yyyyMMdd-HHmmss-fff}-{variable.title}-{variable.quality}";
+            }
+        }
+
+        private async Task LoopingRecording(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
                 {
-                    continue;
+                    var info = await crawler.GetLiveStreamAddressV2(roomId);
+                    var config = await configRepository.Load(cancellationToken) ?? RecordConfig.Default();
+                    if (info.LiveStatus == 0)
+                    {
+                        continue;
+                    }
+
+                    var liveStream = PickStream(config, info);
+
+                    var fileName = await GetFileName(config, liveStream);
+
+                    if (!Directory.Exists($"{roomId}"))
+                    {
+                        Directory.CreateDirectory($"{roomId}");
+                    }
+
+                    var path = Path.Combine(Environment.CurrentDirectory, $"{roomId}", $"{fileName}.flv");
+
+                    var index = 0;
+                    while (File.Exists(path))
+                    {
+                        path = Path.Combine(Environment.CurrentDirectory, $"{roomId}", $"{fileName}_{index}.flv");
+                    }
+
+                    logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Format} 码率 {liveStream.Bitrate} 目标文件 {path}");
+
+
+                    Pipe pipe = new();
+                    using var output = pipe.Writer.AsStream();
+                    Task ffmpegTask = FFMpegArguments
+                        .FromUrlInput(new Uri(liveStream.Url))
+                        .OutputToPipe(new StreamPipeSink(output), opt => opt.CopyChannel(Channel.All).ForceFormat("flv"))
+                        .CancellableThrough(cancellationToken)
+                        .ProcessAsynchronously(true);
+
+
+                    Task fileWriteTask = Task.Run(async () =>
+                    {
+                        using var fs = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+                        while (!cancellationToken.IsCancellationRequested)
+                        {
+                            var result = await pipe.Reader.ReadAsync(cancellationToken);
+                            while (!cancellationToken.IsCancellationRequested && !result.IsCanceled && !result.IsCompleted)
+                            {
+                                ReadOnlySequence<byte> buffer = result.Buffer;
+                                foreach (var item in result.Buffer)
+                                {
+                                    await fs.WriteAsync(item, cancellationToken);
+                                }
+                                pipe.Reader.AdvanceTo(buffer.End);
+                                result = await pipe.Reader.ReadAsync(cancellationToken);
+                            }
+                        }
+                    }, cancellationToken);
+
+                    await Task.WhenAny(ffmpegTask, fileWriteTask);
                 }
-                var recCsc = CancellationTokenSource.CreateLinkedTokenSource(csc.Token);
-                await FFMpegArguments.FromUrlInput()
+                catch (Exception e)
+                {
+                    logger.LogError(e, "监听房间出错");
+                }
+                finally
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
+                }
             }
         }
 
         public async ValueTask Initialize(long roomId)
         {
             this.roomId = roomId;
-            this.info = await crawler.GetLiveRoomInfo(roomId, csc.Token);
+
+            this.info = await crawler.GetLiveRoomInfo(roomId, cts.Token);
             
             loggerScope = this.logger.BeginScope($"{roomId}");
-
-            _ = Task.Run(LoopingRecording, csc.Token);
+            _ = LoopingRecording(cts.Token);
         }
 
         public void Dispose()
         {
-            using var _csc = this.csc;
-            using var _s = loggerScope;
             GC.SuppressFinalize(this);
+            this.cts?.Cancel();
+            this.cts?.Dispose();
+            this.loggerScope?.Dispose();
         }
 
         int IComparer<Stream>.Compare(Stream x, Stream y)

@@ -10,7 +10,7 @@ public class BitrateConfig : IMenuItem
 
     public string Name => "码率设置";
 
-    private static string Convert(int qn) => qn switch 
+    public static string Convert(int qn) => qn switch 
     {
         10000 => "原画",
         80 => "流畅",

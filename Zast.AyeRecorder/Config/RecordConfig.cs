@@ -8,10 +8,6 @@ public class RecordConfig
 
     public Mode Mode { get; set; }
 
-    public string WorkingDirectory { get; set; }
-
-    public string RoomDirectoryNameFormat { get; set; }
-
     public string RecordFileNameFormat { get; set; }
 
     public List<long> RoomIds { get; set; }
@@ -20,5 +16,6 @@ public class RecordConfig
     {
         Quality = 10000,
         Mode = Mode.m3u8_hls_ts_h264,
+        RecordFileNameFormat = "{{roomId}}-{{recordingAt}}-{{title}}-{{quality}}",
     };
 }
