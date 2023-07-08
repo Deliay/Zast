@@ -178,10 +178,12 @@ namespace Zast.AyeRecorder.Recording
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                using var recCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var token = recCts.Token;
                 try
                 {
-                    var info = await crawler.GetLiveStreamAddressV2(roomId, cancellationToken);
-                    var config = await configRepository.Load(cancellationToken) ?? RecordConfig.Default();
+                    var info = await crawler.GetLiveStreamAddressV2(roomId, token);
+                    var config = await configRepository.Load(token) ?? RecordConfig.Default();
                     if (info.LiveStatus == 0 || info.PlayUrlInfo is null)
                     {
                         continue;
@@ -208,11 +210,13 @@ namespace Zast.AyeRecorder.Recording
 
                     Pipe pipe = new();
 
-                    Task recordingTask = Recording(liveStream, pipe.Writer, cancellationToken);
+                    Task recordingTask = Recording(liveStream, pipe.Writer, token);
 
-                    Task fileWriteTask = WriteFile(path, pipe.Reader, cancellationToken);
+                    Task fileWriteTask = WriteFile(path, pipe.Reader, token);
 
                     await Task.WhenAny(recordingTask, fileWriteTask);
+                    recCts.Cancel();
+                    await Task.WhenAll(recordingTask, fileWriteTask);
                 }
                 catch (Exception e)
                 {
