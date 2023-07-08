@@ -6,7 +6,7 @@ public class RecordConfig
 {
     public int Quality { get; set; } = 10000;
 
-    public Mode Mode { get; set; } = Mode.m3u8_hls_ts_h264;
+    public Mode Mode { get; set; } = Mode.streaming;
 
     public string RecordFileNameFormat { get; set; } = "{{roomId}}-{{recordingAt}}-{{title}}-{{quality}}";
 
@@ -15,7 +15,7 @@ public class RecordConfig
     public static RecordConfig Default() => new()
     {
         Quality = 10000,
-        Mode = Mode.m3u8_hls_ts_h264,
+        Mode = Mode.streaming,
         RecordFileNameFormat = "{{roomId}}-{{recordingAt}}-{{title}}-{{quality}}",
         RoomIds = new(),
     };

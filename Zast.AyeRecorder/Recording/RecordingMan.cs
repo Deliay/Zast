@@ -57,7 +57,7 @@ namespace Zast.AyeRecorder.Recording
             };
         }
 
-        private struct Stream
+        private class Stream
         {
             public string Url { get; set; }
             public string Protocol { get; set; }
@@ -90,13 +90,13 @@ namespace Zast.AyeRecorder.Recording
 
             logger.LogInformation($"码率偏好 {bitrate} {protocol} | {format} | {codec}");
 
-            var stream = streams
+            return streams.FirstOrDefault(s => s.Protocol == protocol && s.Format == format && s.Codec == codec)
+            ?? streams
                 .GroupBy(s => s.Bitrate)
                 .MaxBy(s => Math.Abs(s.Key - bitrate) * -1)
                 ?.OrderDescending(this)
-                ?.FirstOrDefault();
-
-            return stream ?? throw new InvalidDataException();
+                ?.FirstOrDefault()
+            ?? throw new InvalidDataException();
         }
 
         private async ValueTask<string> GetFileName(RecordConfig config, Stream stream)
@@ -178,14 +178,15 @@ namespace Zast.AyeRecorder.Recording
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                using var recCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                var token = recCts.Token;
                 try
                 {
+                    using var recCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    var token = recCts.Token;
                     var info = await crawler.GetLiveStreamAddressV2(roomId, token);
                     var config = await configRepository.Load(token) ?? RecordConfig.Default();
                     if (info.LiveStatus == 0 || info.PlayUrlInfo is null)
                     {
+                        await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
                         continue;
                     }
 
@@ -208,15 +209,28 @@ namespace Zast.AyeRecorder.Recording
 
                     logger.LogInformation($"开始录制 {roomId} 源格式 {liveStream.Protocol} - {liveStream.Codec} {liveStream.Format} 码率 {liveStream.Bitrate}");
 
-                    Pipe pipe = new();
+                    try
+                    {
+                        Pipe pipe = new();
 
-                    Task recordingTask = Recording(liveStream, pipe.Writer, token);
+                        Task recordingTask = Recording(liveStream, pipe.Writer, token);
 
-                    Task fileWriteTask = WriteFile(path, pipe.Reader, token);
+                        Task fileWriteTask = WriteFile(path, pipe.Reader, token);
 
-                    await Task.WhenAny(recordingTask, fileWriteTask);
-                    recCts.Cancel();
-                    await Task.WhenAll(recordingTask, fileWriteTask);
+                        await Task.WhenAny(recordingTask, fileWriteTask);
+                        recCts.Cancel();
+                        await Task.WhenAll(recordingTask, fileWriteTask);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "录制出错，将尝试开启下一次录制");
+                    }
+                    var fileInfo = new FileInfo(path);
+                    if (fileInfo.Exists && fileInfo.Length == 0)
+                    {
+                        fileInfo.Delete();
+                        logger.LogInformation($"删除尚未录制到任何内容的录播： {path}");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -250,8 +264,8 @@ namespace Zast.AyeRecorder.Recording
         int IComparer<Stream>.Compare(Stream x, Stream y)
         {
             if (x.Bitrate > y.Bitrate) return 1;
-            else if (x.Protocol == "http_stream") return -1;
-            else if (y.Protocol != "http_stream") return 1;
+            else if (x.Protocol == "http_stream") return 1;
+            else if (y.Protocol == "http_stream") return -1;
             if (x.Codec == "avc") return 1;
             else if (y.Codec == "avc") return -1;
             if (x.Codec == "hevc") return 1;
