@@ -238,7 +238,7 @@ namespace Zast.AyeRecorder.Recording
                 }
                 finally
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
+                    await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
                 }
             }
         }
