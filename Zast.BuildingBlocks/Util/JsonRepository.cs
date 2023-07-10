@@ -70,7 +70,15 @@ namespace Zast.BuildingBlocks.Util
 
         public virtual async Task<T?> Load(CancellationToken cancellationToken = default)
         {
-            return await JsonRepository.Load<T>(path, cancellationToken);
+            await _lock.WaitAsync(cancellationToken);
+            try
+            {
+                return await JsonRepository.Load<T>(path, cancellationToken);
+            }
+            finally
+            {
+                _lock.Release();
+            }
         }
     }
 }
