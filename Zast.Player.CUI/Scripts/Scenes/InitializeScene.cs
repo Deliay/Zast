@@ -33,7 +33,7 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
         public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
         {
-            var config = await settingRepository.Load(cancellationToken);
+            var config = await settingRepository.Load(cancellationToken) ?? new ZastCuiSetting();
             context.Set(config);
 
             var cookie = await cookieStore.Load(cancellationToken);

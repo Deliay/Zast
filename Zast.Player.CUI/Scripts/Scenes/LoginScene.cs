@@ -59,6 +59,8 @@ namespace Zast.Player.CUI.Scripts.Scenes
                 await Task.Delay(TimeSpan.FromSeconds(5));
             });
 
+            context.Set(await cookieStore.Load(cancellationToken));
+
             return prev;
         }
     }

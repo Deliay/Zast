@@ -80,12 +80,11 @@ namespace Zast.Player.CUI.Bilibili
 
         private async Task BottomPanel(ScriptContext context, CancellationToken cancellationToken)
         {
-            using var csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            Task defaultTask = StatusPanel(context, csc.Token);
+            Task defaultTask = StatusPanel(context, cancellationToken);
             
             while (Console.ReadKey().Key != ConsoleKey.Escape)
             {
-                if (csc.IsCancellationRequested) { break; }
+                if (cancellationToken.IsCancellationRequested) { break; }
                 await Task.Delay(1, cancellationToken);
             }
         }
@@ -144,15 +143,25 @@ namespace Zast.Player.CUI.Bilibili
             AnsiConsole.MarkupLine("[grey]正在获得房间地址...[/]");
             var info = await liveCrawler.GetRealRoomInfo(roomId, cancellationToken);
             context.Set(info);
-
-            await PrintLiveStatus(info.RoomId, cancellationToken);
-
-            List<Task> tasks = new()
-                {
-                    Danmaku(context, cancellationToken),
-                    BottomPanel(context, cancellationToken)
-                };
-            await Task.WhenAll(tasks);
+            try
+            {
+                if (context.TryGet<ZastCuiSetting>(out var setting))
+                if (setting.DisplayCover)
+                    await PrintLiveStatus(info.RoomId, cancellationToken);
+            }
+            catch (Exception e) 
+            {
+                AnsiConsole.WriteException(e);
+            }
+            AnsiConsole.MarkupLine("[grey]准备开始链接弹幕...[/]");
+            try
+            {
+                await Danmaku(context, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                AnsiConsole.WriteException(e);
+            }
         }
 
         private async Task RunWhisper(StatusContext ctx, CancellationToken cancellationToken = default)

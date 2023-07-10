@@ -40,6 +40,8 @@ namespace Zast.Player.CUI.Scripts.Scenes
 
             await settingRepository.Save(setting, cancellationToken);
 
+            context.Set(setting);
+
             return prev;
         }
     }
