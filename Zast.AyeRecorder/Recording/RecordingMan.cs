@@ -131,7 +131,6 @@ namespace Zast.AyeRecorder.Recording
                 .FromUrlInput(new Uri(stream.Url))
                 .OutputToPipe(new StreamPipeSink(output), opt => opt.CopyChannel(Channel.All).ForceFormat("flv"))
                 .CancellableThrough(cancellationToken)
-                .NotifyOnError(err => logger.LogError(err))
                 .ProcessAsynchronously(true);
         }
 
