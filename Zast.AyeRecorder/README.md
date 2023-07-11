@@ -13,10 +13,16 @@
 
 ### 安装依赖
 ##### .NET
-程序基于`.NET 7`为了能让程序可以执行，请先安装 `.NET 7` 运行时。访问[这里](https://dotnet.microsoft.com/en-us/download/dotnet/7.0)安装。
+程序基于`.NET 7`为了能让程序可以执行，请先安装 `.NET 7` 运行时。访问下面的链接安装。
+
+- [Window] (https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-7.0.8-windows-x64-installer)
+- [Mac(Intel)] (https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-7.0.8-macos-x64-installer)
+- [Mac(M1)] (https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-7.0.8-macos-arm64-installer)
 
 ##### FFmpeg
-程序会将B站的`m3u8`编码为`flv`，需要ffmpeg支持。访问[这里](https://ffmpeg.org/download.html)安装。
+程序会将B站的`m3u8`编码为`flv`，需要ffmpeg支持。访问下面的链接安装。
+
+- [ffmpeg 官网](https://ffmpeg.org/download.html)
 
 ### 配置
 首次运行会询问首选的录制格式、码率，按照CLI指引设置即可。也可以在配置文件中`setting.json`中修改相应的配置。
