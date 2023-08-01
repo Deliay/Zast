@@ -21,7 +21,7 @@ builder.AddLogging((logger) =>
     var conf = new LoggerConfiguration()
         .Enrich.FromLogContext()
         .WriteTo.File(
-            path: "logs\\logs_.txt",
+            path: Path.Combine("logs", "logs_.txt"),
             rollingInterval: RollingInterval.Day,
             outputTemplate: format);
 
