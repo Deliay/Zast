@@ -19,13 +19,13 @@ var uid = 403496L;
 var uidCookie = "...";
 var roomId = 11306L;
 
+// 用于获得登陆状态下观看直播的token，及弹幕服务器地址等等
+var crawler = new BiliLiveCrawler();
+crawler.SetCookie(uidCookie);
+
 // 一些主播的直播房间号并不是真实房间号
 // 需要调用B站API拿到真实房间号
 var realRoomId = await crawler.GetRealRoomId(roomId, cancellationToken);
-
-// 用于获得登陆状态下观看直播的token，及弹幕服务器地址
-var liveCrawler = new BiliLiveCrawler();
-liveCrawler.SetCookie(uidCookie);
 
 var liveToken = await crawler.GetLiveToken(realRoomId, cancellationToken);
 var spectatorHost = liveToken.Hosts[0];
