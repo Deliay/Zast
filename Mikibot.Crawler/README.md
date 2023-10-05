@@ -38,11 +38,7 @@ await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, u
 // 获得事件
 await foreach(var @event in wsClient.Events(cancellationToken))
 {
-    if (@event is Normal normalMessage)
-    {
-        var cmd = ICommandBase.Parse(normal.RawContent);
-        ...见下方处理事件示例
-    }
+    ...@event使用见下方处理事件示例
 }
 ```
 
@@ -56,20 +52,26 @@ cmdHandler.Subscribe<SuperChatMessage>((msg) => ...);
 cmdHandler.Subscribe<SendGift>(async (msg) => ...);
 
 // 用CommandSubscriber处理直播事件
-await commandHandler.Handle(cmd);
+await commandHandler.Handle(@event);
 ```
 
 ### 处理事件：手动处理
 ```csharp
 // 或者手动处理直播事件
-if (cmd is CommandBase<DanmuMsg> danmakuCmd)
+
+if (@event is Normal normalMessage)
 {
-    // 处理弹幕消息
-    var danmaku = danmakuCmd.Info;
-}
-else if (cmd is CommandBase<SendGift> giftCmd)
-{
-    // 处理礼物消息
-    var gift = giftCmd.Data;
+    var cmd = ICommandBase.Parse(normal.RawContent);
+   
+    if (cmd is CommandBase<DanmuMsg> danmakuCmd)
+    {
+        // 处理弹幕消息
+        var danmaku = danmakuCmd.Info;
+    }
+    else if (cmd is CommandBase<SendGift> giftCmd)
+    {
+        // 处理礼物消息
+        var gift = giftCmd.Data;
+    }
 }
 ```

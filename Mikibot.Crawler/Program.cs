@@ -21,7 +21,7 @@ using var csc = new CancellationTokenSource();
 var logger = services.GetRequiredService<ILogger<Program>>();
 var crawler = services.GetRequiredService<BiliLiveCrawler>();
 var wsClient = services.GetRequiredService<WebsocketClient>();
-var roomId = 1306;
+var roomId = 11306;
 
 var playAddr = await crawler.GetLiveStreamAddressV2(roomId, csc.Token);
 
@@ -60,9 +60,5 @@ cmdHandler.Subscribe<HotRankSettlementV2>(msg => Console.WriteLine($"(热门) {m
 
 await foreach (var @event in wsClient.Events(csc.Token))
 {
-    if (@event is Normal normal)
-    {
-        var cmd = ICommandBase.Parse(normal.RawContent);
-        await cmdHandler.Handle(cmd);
-    }
+    await cmdHandler.Handle(@event);
 }
