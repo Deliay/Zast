@@ -33,7 +33,10 @@ var spectatorHost = liveToken.Hosts[0];
 // 初始化wsClient实例
 // 连接弹幕服务器，填入使用cookie获得的token
 using var wsClient = new WebsocketClient();
+
+// 可以不传crawler.Client，最好传一下，里面设置了Http Referer
 await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
+await wsClient.ConnectAsync(crawler.Client, spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
 
 // 获得事件
 await foreach(var @event in wsClient.Events(cancellationToken))
