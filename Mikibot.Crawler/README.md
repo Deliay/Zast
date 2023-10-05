@@ -12,6 +12,7 @@
 
 ## 使用示例
 
+### 获得直播间弹幕流
 代码示例：
 ```csharp
 var uid = 403496L;
@@ -40,19 +41,34 @@ foreach (var spectatorHost in liveToken.Hosts)
         if (@event is Normal normalMessage)
         {
             var cmd = ICommandBase.Parse(normal.RawContent);
-            // 用CommandSubscriber处理直播事件
-            await commandHandler.Handle(cmd);
-
-            // 或者手动处理直播事件
-            if (cmd is CommandBase<DanmuMsg> danmaku)
-            {
-                // 处理弹幕消息
-            }
-            else if (cmd is CommandBase<SendGift> gift)
-            {
-                // 处理弹幕消息
-            }
+            ...见下方处理事件示例
         }
     }
+}
+```
+
+### 处理事件：使用CommandSubscriber
+```csharp
+// 事先准备好CommandSubscriber类
+using var cmdHandler = new CommandSubscriber();
+cmdHandler.Subscribe<DanmuMsg>((msg) => ...);
+cmdHandler.Subscribe<DanmuMsg>(async (msg) => ...);
+
+// 用CommandSubscriber处理直播事件
+await commandHandler.Handle(cmd);
+```
+
+### 处理事件：手动处理
+```csharp
+// 或者手动处理直播事件
+if (cmd is CommandBase<DanmuMsg> danmakuCmd)
+{
+    // 处理弹幕消息
+    var danmaku = danmakuCmd.Info;
+}
+else if (cmd is CommandBase<SendGift> giftCmd)
+{
+    // 处理礼物消息
+    var gift = giftCmd.Data;
 }
 ```
