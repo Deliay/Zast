@@ -1,14 +1,14 @@
-# B站部分接口访问实现
-该项目主要用于弹幕获取，然后存库，支持登陆到指定账号进行抓取
+# B站信息获取库
+该项目主要用于直播弹幕获取，支持登陆到指定账号进行获取
+
+## Websocket 弹幕抓取实现
+见 `WebsocketCrawler` 文件夹的 `README`，可用事件可以在`ICommandBase`类实现中找到。
 
 ## API实现
 | 类 | 用途
 | - | - |
 | BiliLiveCrawler | 直播弹幕、直播流相关API |
 | BiliVideoCrawler | 视频相关信息API |
-
-## Websocket 弹幕抓取实现
-见 `WebsocketCrawler` 文件夹的 `README`，可用事件可以在`ICommandBase`类实现中找到。
 
 ## 使用示例
 
