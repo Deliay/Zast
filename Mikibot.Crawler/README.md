@@ -19,30 +19,29 @@ var uid = 403496L;
 var uidCookie = "...";
 var roomId = 11306L;
 
+// 一些主播的直播房间号并不是真实房间号
+// 需要调用B站API拿到真实房间号
+var realRoomId = await crawler.GetRealRoomId(roomId, cancellationToken);
+
 // 用于获得登陆状态下观看直播的token，及弹幕服务器地址
 var liveCrawler = new BiliLiveCrawler();
 liveCrawler.SetCookie(uidCookie);
 
-var liveTokenResponse = await liveCrawler.GetLiveToken(roomId, cancellationToken);
-var token = liveTokenResponse.Token;
+var liveToken = await crawler.GetLiveToken(realRoomId, cancellationToken);
+var spectatorHost = liveToken.Hosts[0];
 
-// 循环弹幕服务器地址
-foreach (var spectatorHost in liveToken.Hosts)
+// 初始化wsClient实例
+// 连接弹幕服务器，填入使用cookie获得的token
+using var wsClient = new WebsocketClient();
+await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
+
+// 获得事件
+await foreach(var @event in wsClient.Events(cancellationToken))
 {
-    // websocket获得直播间事件
-    using var wsClient = new WebsocketClient();
-
-    // 连接弹幕服务器，填入使用cookie获得的token
-    await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
-
-    // 获得事件
-    await foreach(var @event in wsClient.Events(cancellationToken))
+    if (@event is Normal normalMessage)
     {
-        if (@event is Normal normalMessage)
-        {
-            var cmd = ICommandBase.Parse(normal.RawContent);
-            ...见下方处理事件示例
-        }
+        var cmd = ICommandBase.Parse(normal.RawContent);
+        ...见下方处理事件示例
     }
 }
 ```
