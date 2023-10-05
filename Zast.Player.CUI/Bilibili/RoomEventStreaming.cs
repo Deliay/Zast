@@ -32,7 +32,7 @@ namespace Zast.Player.CUI.Bilibili
         private async IAsyncEnumerable<ICommandBase> RunAsync(LiveServerInfo spectatorHost, long roomId, long uid, string token, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             using var wsClient = new WebsocketClient();
-            await wsClient.ConnectAsync(spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
+            await wsClient.ConnectAsync(crawler.Client, spectatorHost.Host, spectatorHost.WssPort, roomId, uid, token, "wss", cancellationToken);
 
             await foreach (var @event in wsClient.Events(cancellationToken))
             {

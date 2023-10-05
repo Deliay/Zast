@@ -16,11 +16,7 @@ namespace Mikibot.Crawler.Http.Bilibili
         public const int mxmk = 477317922;
         public const string mxmks = "477317922";
 
-        public BiliLiveCrawler()
-        {
-            AddHeader("Origin", "https://live.bilibili.com/");
-            AddHeader("Referer", "https://live.bilibili.com/");
-        }
+        public HttpClient Client => client;
 
         public long Uid { get; set; }
 

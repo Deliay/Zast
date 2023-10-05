@@ -12,6 +12,12 @@ namespace Mikibot.Crawler.Http
     {
         protected readonly HttpClient client = new();
 
+        public HttpCrawler()
+        {
+            AddHeader("Origin", "https://live.bilibili.com/");
+            AddHeader("Referer", "https://live.bilibili.com/");
+        }
+
         protected void AddHeader(string key, string value)
         {
             client.DefaultRequestHeaders.Add(key, value);
