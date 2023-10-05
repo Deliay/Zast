@@ -53,6 +53,8 @@ foreach (var spectatorHost in liveToken.Hosts)
 using var cmdHandler = new CommandSubscriber();
 cmdHandler.Subscribe<DanmuMsg>((msg) => ...);
 cmdHandler.Subscribe<DanmuMsg>(async (msg) => ...);
+cmdHandler.Subscribe<SuperChatMessage>((msg) => ...);
+cmdHandler.Subscribe<SendGift>(async (msg) => ...);
 
 // 用CommandSubscriber处理直播事件
 await commandHandler.Handle(cmd);
