@@ -37,7 +37,7 @@ namespace Mikibot.Crawler.WebsocketCrawler.Client
 
             await ws.ConnectAsync(uri, safeToken);
 
-            await SendAsync(BasePacket.Auth(roomId, uid, auth), safeToken);
+            await SendAsync(BasePacket.Auth(roomId, uid > 0 ? uid: roomId, auth), safeToken);
 
             _ = Keeplive(safeToken);
 

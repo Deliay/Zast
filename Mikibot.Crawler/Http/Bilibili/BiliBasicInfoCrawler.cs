@@ -6,7 +6,7 @@ namespace Mikibot.Crawler.Http.Bilibili
     {
         public async ValueTask<NavInfo> GetNavInfo(CancellationToken cancellationToken)
         {
-            var result = await GetAsync<BilibiliApiResponse<NavInfo>>("https://api.bilibili.com/nav", cancellationToken);
+            var result = await GetAsync<BilibiliApiResponse<NavInfo>>("https://api.bilibili.com/x/member/web/account", cancellationToken);
             result.AssertCode();
 
             return result.Data;

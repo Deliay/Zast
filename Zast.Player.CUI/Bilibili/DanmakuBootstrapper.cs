@@ -98,10 +98,6 @@ namespace Zast.Player.CUI.Bilibili
             {
                 AnsiConsole.MarkupLine($"[lime]检测倒你已经登录，将以 [teal]{cookie.Name}[/] 的身份进入直播间[/]");
             }
-            else
-            {
-                AnsiConsole.MarkupLine($"[yellow]你还没有登录，B站将在游客观看10分钟后屏蔽所有弹幕用户名称。[/]");
-            }
 
             DateTime start = DateTime.Now;
 

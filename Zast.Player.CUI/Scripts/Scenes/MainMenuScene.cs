@@ -42,10 +42,6 @@ namespace Zast.Player.CUI.Scripts.Scenes
             {
                 AnsiConsole.MarkupLine("[yellow]提醒[/] 你已经在cookie.json设置了登录状态，请妥善保管您的cookie.json，请勿将文件转发给他人");
             }
-            else
-            {
-                AnsiConsole.MarkupLine("[yellow]提醒[/] 游客状态下10分钟后B站会给用户名打码，请登录获得最佳体验");
-            }
 
             var next = (IScript)AnsiConsole.Prompt(new SelectionPrompt<IMenuItem>()
                 .Title($"[teal]{cookieInfo.Name ?? "游客"}[/]，做点什么...")

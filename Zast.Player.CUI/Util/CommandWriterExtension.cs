@@ -18,7 +18,7 @@ namespace Zast.Player.CUI.Util
 
         private static void Handle(SendGift gift)
         {
-            if (gift.CoinType == "gold" && gift.DiscountPrice > 30000)
+            if (gift.CoinType == "gold" && gift.DiscountPrice >= 1)
             {
                 var panel = new Panel($"[grey]礼物[/] [yellow]{gift.DiscountPrice / 100}电池[/] [teal]{gift.SenderName}[/] {gift.Action} {gift.GiftName}")
                 {
