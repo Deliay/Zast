@@ -50,11 +50,12 @@ namespace Zast.Player.CUI.Bilibili
         private readonly Random _random = new();
         private async ValueTask<string?> GetLiveStreamAddress(CancellationToken token)
         {
-            var realRoomid = await crawler.GetRealRoomId(roomId, token);
-            var allAddresses = await crawler.GetLiveStreamAddress(realRoomid, token);
-            if (allAddresses.Count <= 0) return default;
-
-            return allAddresses[_random.Next(0, allAddresses.Count - 1)].Url;
+            var addressResult = await crawler.GetLiveStreamAddressV2(roomId, token);
+            return addressResult.PlayUrlInfo.PlayUrl.Streams
+                .SelectMany(c => c.Formats)
+                .SelectMany(c => c.Codec)
+                .Select(c => $"{c.UrlInfos.First().Host}{c.BaesUrl}{c.UrlInfos.First().Extra}")
+                .FirstOrDefault();
         }
 
         private async Task OpenLiveStream(PipeWriter writer, CancellationToken token)

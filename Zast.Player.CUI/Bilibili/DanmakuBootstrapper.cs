@@ -195,7 +195,15 @@ namespace Zast.Player.CUI.Bilibili
             using var bass = new UrlBassPlayer();
             bass.LoadingProgressUpdated += (size, time) => _voiceCache = $" | {size / 1024}kb {time.Minutes}:{time.Seconds}";
 
-            bass.Play(RoomStreamStreamingProxy.WaveEndpoint, cancellationToken);
+            try
+            {
+                bass.Play(RoomStreamStreamingProxy.WaveEndpoint, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                AnsiConsole.WriteException(e);
+                return;
+            }
 
             var tcs = new TaskCompletionSource();
             cancellationToken.Register(() => tcs.SetResult());

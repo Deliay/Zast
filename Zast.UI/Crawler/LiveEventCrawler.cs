@@ -7,6 +7,7 @@ using Mikibot.Crawler.WebsocketCrawler.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace Zast.UI.Crawler
 
         public LiveEventCrawler(IWindowManager wm)
         {
-            this.crawler = new BiliLiveCrawler();
+            this.crawler = new BiliLiveCrawler(new HttpClient());
             this.csc = new CancellationTokenSource();
             this.ws = new WebsocketClient();
             this.wm = wm;

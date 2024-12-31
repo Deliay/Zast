@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <OutputType>Library</OutputType>
-	  <TargetFramework>net7.0-windows</TargetFramework>
+	  <TargetFramework>net9.0-windows</TargetFramework>
 	  <Nullable>enable</Nullable>
 	  <UseWPF>true</UseWPF>
 	  <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -13,11 +13,12 @@
 			<Private>False</Private>
 			<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
 		</ProjectReference>
-		<ProjectReference Include="..\Mikibot.Crawler\Mikibot.Crawler.csproj" />
 		<ProjectReference Include="..\Zast.Core\Zast.Core.csproj">
 			<Private>False</Private>
 			<CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
 		</ProjectReference>
+
+		<PackageReference Include="Mikibot.Crawler" Version="1.0.5" />
 	</ItemGroup>
 
 

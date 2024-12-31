@@ -18,6 +18,7 @@ namespace Zast.Player.CUI.Bilibili.Streaming.AudioPlayer
                 .OutputToPipe(new StreamPipeSink(@out), opt => opt
                     .DisableChannel(Channel.Video)
                     .WithCustomArgument("-osr 16000 -f wav"))
+                .CancellableThrough(cancellationToken)
                 .ProcessAsynchronously();
         }
     }

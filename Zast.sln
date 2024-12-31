@@ -5,8 +5,6 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zast.Playground", "Zast.Playground\Zast.Playground.csproj", "{86ECBF7B-A927-4D4D-B33C-ADBC3AA1F183}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mikibot.Crawler", "Mikibot.Crawler\Mikibot.Crawler.csproj", "{FF25BA73-5D48-45BA-BB8D-723B81C07745}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zast.Core", "Zast.Core\Zast.Core.csproj", "{273EBD4C-99D3-49F3-9BF6-F9C90387FBB0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmberKernel", "EmberKernel\EmberKernel.csproj", "{A121342A-CEF7-4344-A36A-616D8F4F8078}"
@@ -33,10 +31,6 @@ Global
 		{86ECBF7B-A927-4D4D-B33C-ADBC3AA1F183}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86ECBF7B-A927-4D4D-B33C-ADBC3AA1F183}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86ECBF7B-A927-4D4D-B33C-ADBC3AA1F183}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FF25BA73-5D48-45BA-BB8D-723B81C07745}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FF25BA73-5D48-45BA-BB8D-723B81C07745}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FF25BA73-5D48-45BA-BB8D-723B81C07745}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FF25BA73-5D48-45BA-BB8D-723B81C07745}.Release|Any CPU.Build.0 = Release|Any CPU
 		{273EBD4C-99D3-49F3-9BF6-F9C90387FBB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{273EBD4C-99D3-49F3-9BF6-F9C90387FBB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{273EBD4C-99D3-49F3-9BF6-F9C90387FBB0}.Release|Any CPU.ActiveCfg = Release|Any CPU

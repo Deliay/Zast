@@ -11,6 +11,7 @@ using Zast.BuildingBlocks.Util;
 IServiceCollection builder = new ServiceCollection();
 
 builder.AddSingleton<CookieStore>();
+builder.AddSingleton<HttpClient>();
 builder.AddSingleton<BiliLiveCrawler>();
 builder.AddSingleton<BiliBasicInfoCrawler>();
 
