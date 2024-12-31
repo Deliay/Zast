@@ -40,6 +40,7 @@ builder.AddSingleton<RecordConfigRepository>();
 builder.AddSingleton<ConfigScript>();
 builder.AddAllSingleton<BitrateConfig, IMenuItem>();
 builder.AddAllSingleton<PreferModeConfig, IMenuItem>();
+builder.AddAllSingleton<CookieConfig, IMenuItem>();
 builder.AddAllSingleton<ExitConfig, IMenuItem>();
 
 builder.AddSingleton<AddRoomScript>();
