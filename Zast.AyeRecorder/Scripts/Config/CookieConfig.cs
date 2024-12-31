@@ -1,12 +1,13 @@
 ﻿using Spectre.Console;
 using Zast.AyeRecorder.Config;
+using Zast.AyeRecorder.Script;
 using Zast.BuildingBlocks.Scripts;
 
 namespace Zast.AyeRecorder.Scripts.Config;
 
 public class CookieConfig(RecordConfigRepository configRepository) : IMenuItem
 {
-    public Type Category { get; } = typeof(CookieConfig);
+    public Type Category { get; } = typeof(ConfigScript);
     public string Name => "登录...";
     public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
     {
