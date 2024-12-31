@@ -2,6 +2,7 @@
 using FFMpegCore.Enums;
 using FFMpegCore.Pipes;
 using Mikibot.Crawler.Http.Bilibili;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -108,6 +109,7 @@ namespace Zast.Player.CUI.Bilibili
                 
                 var reader = new MemoryStream(stream.ToArray());
                 SegmentData last = null!;
+                AnsiConsole.MarkupLine($"[grey]直播[/] [silver] 正在识别 [/]");
                 await foreach (var item in whisper.ProcessAsync(reader, token))
                 {
                     yield return (item, last);

@@ -50,31 +50,34 @@ namespace Zast.Player.CUI.Bilibili
 
         public async IAsyncEnumerable<ICommandBase> RunAsync(long roomId, long uid, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            using var _csc = csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            var spectatorEndpoint = await crawler.GetLiveToken(roomId, _csc.Token);
-
-            foreach (var spectatorHost in spectatorEndpoint.Hosts)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (_csc.IsCancellationRequested) break;
-                AnsiConsole.MarkupLine($"[grey]系统[/] 连接弹幕服务器 {spectatorHost.Host}");
-                var enumerator = RunAsync(spectatorHost, roomId, uid, spectatorEndpoint.Token, cancellationToken)
-                    .GetAsyncEnumerator(cancellationToken);
+                using var _csc = csc = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-                bool hasNext;
-                do
+                var spectatorEndpoint = await crawler.GetLiveToken(roomId, _csc.Token);
+
+                foreach (var spectatorHost in spectatorEndpoint.Hosts)
                 {
-                    try
+                    if (_csc.IsCancellationRequested) break;
+                    AnsiConsole.MarkupLine($"[grey]系统[/] 连接弹幕服务器 {spectatorHost.Host}");
+                    var enumerator = RunAsync(spectatorHost, roomId, uid, spectatorEndpoint.Token, cancellationToken)
+                        .GetAsyncEnumerator(cancellationToken);
+
+                    bool hasNext;
+                    do
                     {
-                        hasNext = await enumerator.MoveNextAsync();
-                    }
-                    catch
-                    {
-                        AnsiConsole.MarkupLine($"[grey]系统[/] 连接失败 {spectatorHost.Host}");
-                        break;
-                    }
-                    yield return enumerator.Current;
-                } while (hasNext);
+                        try
+                        {
+                            hasNext = await enumerator.MoveNextAsync();
+                        }
+                        catch
+                        {
+                            AnsiConsole.MarkupLine($"[grey]系统[/] 连接失败 {spectatorHost.Host}");
+                            break;
+                        }
+                        yield return enumerator.Current;
+                    } while (hasNext);
+                }
             }
         }
     }

@@ -152,7 +152,11 @@ namespace Zast.Player.CUI.Bilibili
             AnsiConsole.MarkupLine("[grey]准备开始链接弹幕...[/]");
             try
             {
-                await Danmaku(context, cancellationToken);
+                AnsiConsole.MarkupLine($"[grey]直播[/] [silver] 初始化语音识别中 [/]");
+                Task whisper = RunWhisper(cancellationToken);
+                Task danmaku = Danmaku(context, cancellationToken);
+
+                await Task.WhenAll(whisper, danmaku);
             }
             catch (Exception e)
             {
@@ -160,15 +164,23 @@ namespace Zast.Player.CUI.Bilibili
             }
         }
 
-        private async Task RunWhisper(StatusContext ctx, CancellationToken cancellationToken = default)
+        private async Task RunWhisper(CancellationToken cancellationToken = default)
         {
-            using var rmtpStreaming = new RoomStreamWhisper(liveCrawler, roomId);
-            ctx.Refresh();
-            await foreach (var (curr, last) in rmtpStreaming.RunAsync(cancellationToken))
+            AnsiConsole.MarkupLine($"[grey]直播[/] [silver] 初始化语音识别中 [/]");
+            try
             {
-                if (last is not null)
-                    await Task.Delay((curr.End - last.Start) * 0.25, cancellationToken);
-                AnsiConsole.MarkupLine($"[grey]直播[/] [silver]{curr.Text.EscapeMarkup()}[/]");
+                using var rmtpStreaming = new RoomStreamWhisper(liveCrawler, roomId);
+                AnsiConsole.MarkupLine($"[grey]直播[/] [silver] 开始语音AI识别 [/]");
+                await foreach (var (curr, last) in rmtpStreaming.RunAsync(cancellationToken))
+                {
+                    if (last is not null)
+                        await Task.Delay((curr.End - last.Start) * 0.25, cancellationToken);
+                    AnsiConsole.MarkupLine($"[grey]直播[/] [silver]{curr.Text.EscapeMarkup()}[/]");
+                }
+            }
+            catch (Exception e)
+            {
+                AnsiConsole.WriteException(e);
             }
         }
 
@@ -212,6 +224,7 @@ namespace Zast.Player.CUI.Bilibili
             try
             {
                 roomInfo = await liveCrawler.GetLiveRoomInfo(roomId, token);
+                AnsiConsole.MarkupLine($"[grey]直播[/] [silver] 初始化声音 [/]");
                 Task voice = RunLiveStream(context, token);
                 List<Task> taskGroup = new()
                 {
@@ -221,7 +234,7 @@ namespace Zast.Player.CUI.Bilibili
                 };
                 await Task.WhenAny(taskGroup);
                 csc.Cancel();
-                await Task.WhenAll(taskGroup.Concat(Enumerable.Repeat(voice, 1)));
+                await Task.WhenAll(taskGroup.Append(voice));
             }
             catch (Exception e)
             {
