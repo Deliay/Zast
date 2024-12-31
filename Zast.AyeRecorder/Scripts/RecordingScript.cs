@@ -45,7 +45,6 @@ public class RecordingScript(
 
         if (config.Cookie is not null)
         {
-            AnsiConsole.WriteLine("检测到Cookie已设置，将使用Cookie访问");
             crawler.SetCookie(config.Cookie);
         }
 
