@@ -7,44 +7,36 @@ using System.Threading.Tasks;
 using Zast.AyeRecorder.Config;
 using Zast.BuildingBlocks.Scripts;
 
-namespace Zast.AyeRecorder.Scripts
+namespace Zast.AyeRecorder.Scripts;
+
+internal class RemoveRoomScript(RecordConfigRepository configRepository) : IScript
 {
-    internal class RemoveRoomScript : IScript
+    public string Name => "移除房间";
+
+    public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
     {
-        private readonly RecordConfigRepository configRepository;
+        var config = await configRepository.Load(cancellationToken) ?? RecordConfig.Default();
 
-        public RemoveRoomScript(RecordConfigRepository configRepository)
+        var args = Environment.GetCommandLineArgs();
+
+        if (args.Length < 3)
         {
-            this.configRepository = configRepository;
-        }
-
-        public string Name => "移除房间";
-
-        public async ValueTask<IScript> Show(IScript prev, ScriptContext context, CancellationToken cancellationToken)
-        {
-            var config = await configRepository.Load(cancellationToken) ?? RecordConfig.Default();
-
-            var args = Environment.GetCommandLineArgs();
-
-            if (args.Length < 3)
-            {
-                AnsiConsole.MarkupLine("[red]必须输入房间号[/]");
-                return default!;
-            }
-
-            var rawRoomId = args[2];
-            if (!int.TryParse(rawRoomId, out var roomId))
-            {
-                AnsiConsole.MarkupLine($"{rawRoomId} 不是合法的房间号");
-            }
-
-
-            config.RoomIds.Remove(roomId);
-
-            await configRepository.Save(config, cancellationToken);
-
-            AnsiConsole.MarkupLine($"[yellow]{roomId}[/] 移除成功");
+            AnsiConsole.MarkupLine("[red]必须输入房间号[/]");
             return default!;
         }
+
+        var rawRoomId = args[2];
+        if (!int.TryParse(rawRoomId, out var roomId))
+        {
+            AnsiConsole.MarkupLine($"{rawRoomId} 不是合法的房间号");
+        }
+
+
+        config.RoomIds.Remove(roomId);
+
+        await configRepository.Save(config, cancellationToken);
+
+        AnsiConsole.MarkupLine($"[yellow]{roomId}[/] 移除成功");
+        return default!;
     }
 }

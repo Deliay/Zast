@@ -1,22 +1,21 @@
 using Spectre.Console;
 using Zast.AyeRecorder.Config;
-using Zast.AyeRecorder.Script.Config;
 using Zast.BuildingBlocks.Scripts;
 
 namespace Zast.AyeRecorder.Script;
 
 public class ConfigScript : IScript
 {
-    private readonly IEnumerable<IMenuItem> configMenuItems;
-    private readonly RecordConfigRepository configRepository;
+    private readonly IEnumerable<IMenuItem> _configMenuItems;
+    private readonly RecordConfigRepository _configRepository;
 
     public ConfigScript(
         IEnumerable<IMenuItem> configMenuItems,
         RecordConfigRepository configRepository
     )
     {
-        this.configMenuItems = configMenuItems.Where(item => typeof(ConfigScript) == item.Category);
-        this.configRepository = configRepository;
+        this._configMenuItems = configMenuItems.Where(item => typeof(ConfigScript) == item.Category);
+        this._configRepository = configRepository;
     }
 
     public string Name => "config";
@@ -25,11 +24,11 @@ public class ConfigScript : IScript
     {
         if (!context.TryGet<RecordConfig>(out var setting))
         {
-            context.Set(await configRepository.Load(cancellationToken) ?? RecordConfig.Default());
+            context.Set(await _configRepository.Load(cancellationToken) ?? RecordConfig.Default());
         }
         else
         {
-            await configRepository.Save(context.Get<RecordConfig>(), cancellationToken);
+            await _configRepository.Save(context.Get<RecordConfig>(), cancellationToken);
         }
 
         Console.Clear();
@@ -39,7 +38,7 @@ public class ConfigScript : IScript
 
         return AnsiConsole.Prompt(new SelectionPrompt<IMenuItem>()
             .Title("设置...")
-            .AddChoices(configMenuItems)
+            .AddChoices(_configMenuItems)
             .UseConverter(c => c.Name));
     }
 }

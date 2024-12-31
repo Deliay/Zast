@@ -1,4 +1,4 @@
-using Zast.AyeRecorder.Script.Config;
+using Zast.AyeRecorder.Scripts.Config;
 
 namespace Zast.AyeRecorder.Config;
 
@@ -11,6 +11,8 @@ public class RecordConfig
     public string RecordFileNameFormat { get; set; } = "{{roomId}}-{{recordingAt}}-{{title}}-{{quality}}";
 
     public HashSet<long> RoomIds { get; set; } = new();
+    
+    public string? Cookie { get; set; }
 
     public static RecordConfig Default() => new()
     {

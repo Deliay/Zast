@@ -6,8 +6,8 @@ using Serilog.Sinks.SystemConsole.Themes;
 using Zast.AyeRecorder.Config;
 using Zast.AyeRecorder.Recording;
 using Zast.AyeRecorder.Script;
-using Zast.AyeRecorder.Script.Config;
 using Zast.AyeRecorder.Scripts;
+using Zast.AyeRecorder.Scripts.Config;
 using Zast.BuildingBlocks.Scripts;
 using Zast.BuildingBlocks.Util;
 
@@ -47,8 +47,8 @@ builder.AddSingleton<RemoveRoomScript>();
 
 builder.AddSingleton<RecordingScript>();
 builder.AddTransient<RecordingMan>();
+builder.AddSingleton<HttpClient>();
 builder.AddSingleton<BiliLiveCrawler>();
-builder.AddSingleton<BiliLiveStreamCrawler>();
 
 var services = builder.BuildServiceProvider();
 

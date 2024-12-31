@@ -1,9 +1,9 @@
 using Spectre.Console;
 using Zast.AyeRecorder.Config;
-using Zast.AyeRecorder.Script.Config;
+using Zast.AyeRecorder.Script;
 using Zast.BuildingBlocks.Scripts;
 
-namespace Zast.AyeRecorder.Script.Config;
+namespace Zast.AyeRecorder.Scripts.Config;
 
 public partial class PreferModeConfig : IMenuItem
 {

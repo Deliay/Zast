@@ -1,7 +1,7 @@
 using Zast.AyeRecorder.Script;
 using Zast.BuildingBlocks.Scripts;
 
-namespace Zast.AyeRecorder.Config;
+namespace Zast.AyeRecorder.Scripts.Config;
 
 public class ExitConfig : IMenuItem
 {

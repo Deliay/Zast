@@ -1,4 +1,4 @@
-﻿namespace Zast.AyeRecorder.Script.Config;
+﻿namespace Zast.AyeRecorder.Scripts.Config;
 
 public enum Mode
 {
